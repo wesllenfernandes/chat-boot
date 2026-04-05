@@ -8,7 +8,9 @@ class ClienteService {
       cliente = await Cliente.create({
         telefone,
         etapa_atual: 'MENU',
-        itens_pedido: []
+        itens_pedido: [],
+        ultima_interacao: new Date(),
+        aviso_timeout_enviado: false
       });
     }
     
@@ -17,14 +19,21 @@ class ClienteService {
 
   static async atualizarEtapa(telefone, etapa) {
     await Cliente.update(
-      { etapa_atual: etapa },
+      { 
+        etapa_atual: etapa,
+        ultima_interacao: new Date(),
+        aviso_timeout_enviado: false
+      },
       { where: { telefone } }
     );
   }
 
   static async atualizarProdutoSelecionado(telefone, produto) {
     await Cliente.update(
-      { produto_selecionado: produto },
+      { 
+        produto_selecionado: produto,
+        ultima_interacao: new Date()
+      },
       { where: { telefone } }
     );
   }
@@ -35,7 +44,10 @@ class ClienteService {
     itens.push(item);
     
     await Cliente.update(
-      { itens_pedido: itens },
+      { 
+        itens_pedido: itens,
+        ultima_interacao: new Date()
+      },
       { where: { telefone } }
     );
   }
@@ -45,7 +57,9 @@ class ClienteService {
       { 
         itens_pedido: [],
         produto_selecionado: null,
-        etapa_atual: 'MENU'
+        etapa_atual: 'MENU',
+        ultima_interacao: new Date(),
+        aviso_timeout_enviado: false
       },
       { where: { telefone } }
     );
@@ -53,7 +67,18 @@ class ClienteService {
 
   static async resetarEtapa(telefone) {
     await Cliente.update(
-      { etapa_atual: 'MENU' },
+      { 
+        etapa_atual: 'MENU',
+        ultima_interacao: new Date(),
+        aviso_timeout_enviado: false
+      },
+      { where: { telefone } }
+    );
+  }
+
+  static async atualizarUltimaInteracao(telefone) {
+    await Cliente.update(
+      { ultima_interacao: new Date() },
       { where: { telefone } }
     );
   }

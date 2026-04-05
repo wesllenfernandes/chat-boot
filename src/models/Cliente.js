@@ -24,6 +24,14 @@ const Cliente = sequelize.define('Cliente', {
   itens_pedido: {
     type: DataTypes.JSON,
     defaultValue: []
+  },
+  ultima_interacao: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  aviso_timeout_enviado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   tableName: 'clientes',

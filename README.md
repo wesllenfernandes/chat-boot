@@ -13,6 +13,7 @@ Chatbot de atendimento automatizado para pedidos de pizzaria com integração ao
 - ✅ Persistência no banco de dados SQLite
 - ✅ Suporte a múltiplos usuários simultâneos
 - ✅ Validação de entradas do usuário
+- ✅ **Sistema de timeout automático** (aviso em 2min, encerra em 5min)
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -115,6 +116,26 @@ npm run dev
 - `reiniciar` - Reinicia o pedido
 - `cancelar` - Cancela o pedido atual
 - `finalizar` - Finaliza a seleção de produtos
+
+### ⏰ Sistema de Timeout Automático
+
+O bot possui um sistema de timeout para otimizar o atendimento:
+
+- **⚠️ Aviso (2 minutos)**: Se o cliente não responder em 2 minutos, recebe um aviso
+- **🔒 Encerramento (5 minutos)**: Após 5 minutos de inatividade, o atendimento é encerrado automaticamente
+- **📡 Reinício**: Basta enviar qualquer mensagem para continuar ou digitar "menu" para reiniciar
+
+**Exemplo de aviso:**
+```
+⏰ Aviso de Inatividade
+
+Percebemos que você está demorando para responder.
+⏱️ Você tem mais 3 minutos antes que o atendimento seja encerrado.
+
+📝 Para continuar, basta enviar qualquer mensagem.
+
+Se quiser reiniciar, digite "menu"
+```
 
 ### Mensagens de Ativação
 

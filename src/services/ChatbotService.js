@@ -1,9 +1,13 @@
 const { formatarCardapio, buscarProduto } = require('../config/cardapio');
 const ClienteService = require('./ClienteService');
 const PedidoService = require('./PedidoService');
+const AIService = require('./AIService');
 
 class ChatbotService {
   static async processarMensagem(telefone, mensagem) {
+    // Atualizar última interação
+    await ClienteService.atualizarUltimaInteracao(telefone);
+    
     // Normalizar mensagem
     const msg = mensagem.toLowerCase().trim();
     
@@ -117,7 +121,7 @@ class ChatbotService {
       }
       
       return {
-        resposta: `${saudacao} Bem-vindo à *Pizzaria*! 🍕\n\n${formatarCardapio()}`,
+        resposta: `${saudacao} Olá! Seja bem-vindo à Pizzaria Otaliva 🍕\n\n${formatarCardapio()}`,
         proximaEtapa: 'MENU'
       };
     }
@@ -141,11 +145,20 @@ class ChatbotService {
       };
     }
     
-    // Se não for um número válido, mostrar cardápio novamente
-    return {
-      resposta: '❌ Opção inválida!\n\n' + formatarCardapio(),
-      proximaEtapa: 'MENU'
-    };
+    // Se não for um número válido, usar IA para responder
+    try {
+      const respostaIA = await AIService.gerarResposta(mensagem);
+      return {
+        resposta: respostaIA,
+        proximaEtapa: 'MENU'
+      };
+    } catch (error) {
+      console.error('Erro ao usar IA:', error);
+      return {
+        resposta: '❌ Opção inválida!\n\n' + formatarCardapio(),
+        proximaEtapa: 'MENU'
+      };
+    }
   }
   
   static async processarEscolhaProduto(telefone, msg, cliente) {

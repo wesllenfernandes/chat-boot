@@ -4,6 +4,7 @@ const cors = require('cors');
 const { sequelize, testConnection } = require('./src/config/database');
 const { Cliente, Pedido, ItemPedido } = require('./src/models');
 const WhatsAppController = require('./src/controllers/WhatsAppController');
+const TimeoutService = require('./src/services/TimeoutService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,6 +72,16 @@ async function startServer() {
     // Inicializar WhatsApp
     console.log('📱 Inicializando WhatsApp Web...');
     whatsappController = new WhatsAppController();
+    
+    // Adicionar listener para quando o WhatsApp estiver pronto
+    whatsappController.client.on('ready', () => {
+      console.log('\n✅ Cliente WhatsApp conectado com sucesso!');
+      console.log('🤖 Chatbot da Pizzaria está online!\n');
+      
+      // Iniciar sistema de timeout
+      TimeoutService.iniciarVerificacao(whatsappController);
+    });
+    
     await whatsappController.initialize();
     
     // Iniciar servidor Express
@@ -78,7 +89,6 @@ async function startServer() {
       console.log('\n╔════════════════════════════════════════╗');
       console.log(`║   SERVIDOR RODANDO NA PORTA ${PORT}       ║`);
       console.log('╚════════════════════════════════════════╝\n');
-      console.log('🍕 Chatbot da Pizzaria está pronto para receber pedidos!\n');
     });
     
   } catch (error) {
@@ -94,6 +104,10 @@ process.on('unhandledRejection', (error) => {
 
 process.on('SIGINT', async () => {
   console.log('\n\n⚠️  Encerrando servidor...');
+  
+  // Parar sistema de timeout
+  TimeoutService.pararVerificacao();
+  
   if (whatsappController) {
     await whatsappController.client.destroy();
   }
