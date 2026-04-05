@@ -1,18 +1,24 @@
 {
   "name": "chatbot-pizzaria",
-  "version": "1.0.0",
-  "description": "Chatbot de pedidos para pizzaria com integração WhatsApp",
+  "version": "2.0.0",
+  "description": "Chatbot de pedidos para pizzaria com integração WhatsApp e IA local (Ollama)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "limpar-banco": "node limpar-banco.js"
+    "limpar-banco": "node limpar-banco.js",
+    "verificar-ollama": "node scripts/verificar-ollama.js",
+    "listar-modelos": "node scripts/listar-modelos.js",
+    "testar-ia": "node scripts/testar-ia.js"
   },
   "keywords": [
     "chatbot",
     "whatsapp",
     "pizzaria",
-    "pedidos"
+    "pedidos",
+    "ollama",
+    "llm",
+    "ia-local"
   ],
   "author": "",
   "license": "ISC",
@@ -20,7 +26,6 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "openai": "^6.33.0",
     "qrcode-terminal": "^0.12.0",
     "sequelize": "^6.35.0",
     "sqlite3": "^5.1.6",

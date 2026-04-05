@@ -1,11 +1,14 @@
 # 🍕 Chatbot de Pedidos para Pizzaria
 
-Chatbot de atendimento automatizado para pedidos de pizzaria com integração ao WhatsApp.
+Chatbot de atendimento automatizado para pedidos de pizzaria com integração ao WhatsApp e IA 100% local (Ollama).
 
 ## 📋 Funcionalidades
 
 - ✅ Cardápio digital interativo
 - ✅ Seleção de produtos por número
+- ✅ **Interpretação de pedidos em linguagem natural** (ex: "quero duas pizzas de calabresa")
+- ✅ **Atendente de balcão inteligente** com Ollama (LLM local, 100% offline)
+- ✅ **Suporte a mensagens de áudio** com transcrição automática (100% local)
 - ✅ Cálculo automático do total do pedido
 - ✅ Múltiplas formas de pagamento
 - ✅ Registro de endereço de entrega
@@ -14,6 +17,7 @@ Chatbot de atendimento automatizado para pedidos de pizzaria com integração ao
 - ✅ Suporte a múltiplos usuários simultâneos
 - ✅ Validação de entradas do usuário
 - ✅ **Sistema de timeout automático** (aviso em 2min, encerra em 5min)
+- ✅ **100% Local e Offline** - Não requer APIs externas
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -23,6 +27,19 @@ Chatbot de atendimento automatizado para pedidos de pizzaria com integração ao
 - **SQLite** - Banco de dados leve e sem servidor
 - **whatsapp-web.js** - Integração com WhatsApp
 - **QR Code Terminal** - Geração de QR Code
+- **Ollama** - LLM local (100% offline)
+- **Whisper (Ollama)** - Transcrição de áudio local
+
+## 🌟 Destaque: 100% Local e Offline
+
+Este chatbot funciona **completamente offline** e **não requer nenhuma API externa**:
+
+- ❌ **Não usa OpenAI** ou qualquer serviço pago de IA
+- ❌ **Não usa Google Cloud** ou Azure
+- ❌ **Não usa serviços de nuvem**
+- ✅ **Todas as funções rodam localmente** com Ollama
+- ✅ **Sem custos recorrentes**
+- ✅ **Privacidade total** - dados nunca saem do servidor
 
 ## 📁 Estrutura do Projeto
 
@@ -58,8 +75,43 @@ chatbot-pizzaria/
 
 - Node.js (v14 ou superior)
 - npm ou yarn
+- **Ollama** (REQUERIDO para IA local)
 
-### Passo 1: Instalar as dependências
+### Passo 1: Instalar Ollama (OBRIGATÓRIO)
+
+Para usar o sistema de IA híbrida, instale o Ollama:
+
+**Windows:**
+```bash
+# Baixe em https://ollama.ai/download
+# Ou use winget:
+winget install Ollama.Ollama
+```
+
+**Linux:**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**macOS:**
+```bash
+brew install ollama
+```
+
+Baixe os modelos necessários:
+```bash
+ollama pull llama3.2
+ollama pull whisper
+```
+
+Verifique a instalação:
+```bash
+npm run verificar-ollama
+```
+
+📖 **Documentação completa**: [OLLAMA_CONFIG.md](OLLAMA_CONFIG.md)
+
+### Passo 2: Instalar as dependências
 
 ```bash
 npm install
@@ -67,13 +119,19 @@ npm install
 
 ### Passo 2: Configurar variáveis de ambiente
 
-O arquivo `.env` já está configurado com os valores padrão. Não é necessário alterar nada para usar SQLite.
+Crie o arquivo `.env` baseado no `.env.example`:
 
 ```env
 PORT=3000
 NODE_ENV=development
 WHATSAPP_SESSION_PATH=./sessions
+
+# Configurações do Ollama (LLM Local - REQUERIDO)
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
 ```
+
+**⚠️ IMPORTANTE**: Não é necessário configurar nenhuma API externa. O sistema funciona 100% localmente com o Ollama.
 
 ### Passo 3: Executar o projeto
 
@@ -82,9 +140,20 @@ npm start
 ```
 
 Ou para desenvolvimento (com auto-reload):
-
 ```bash
 npm run dev
+```
+
+**Scripts úteis:**
+```bash
+# Verificar se Ollama está disponível
+npm run verificar-ollama
+
+# Listar modelos disponíveis no Ollama
+npm run listar-modelos
+
+# Limpar banco de dados
+npm run limpar-banco
 ```
 
 ### Passo 4: Conectar o WhatsApp
@@ -98,6 +167,18 @@ npm run dev
 **Nota:** O banco de dados SQLite será criado automaticamente no arquivo `database.sqlite` na primeira execução.
 
 ## 📱 Como Usar
+
+### 🤖 Sistema de IA 100% Local com Ollama
+
+Este chatbot funciona completamente local, utilizando Ollama (LLM local) para:
+
+1. **Atender dúvidas**: Responder perguntas sobre a pizzaria, horários, produtos, etc.
+2. **Interpretar pedidos em linguagem natural**: Entender pedidos descritos em português natural
+3. **Transcrever áudio**: Converter mensagens de áudio em texto (100% local com Whisper)
+
+**📖 Documentação completa**:
+- [OLLAMA_CONFIG.md](OLLAMA_CONFIG.md) - Configuração do Ollama
+- [AUDIO_CONFIG.md](AUDIO_CONFIG.md) - Processamento de áudio 100% local
 
 ### Fluxo de Atendimento
 
@@ -164,6 +245,63 @@ Bot: 🌙 Boa noite! Bem-vindo à Pizzaria! 🍕
 Usuário: eai
 Bot: 👋 E aí! Bem-vindo à Pizzaria! 🍕
      [Cardápio...]
+```
+
+### 🗣️ Pedidos em Linguagem Natural
+
+O chatbot pode interpretar pedidos descritos naturalmente:
+
+```
+Usuário: quero duas pizzas de calabresa
+Bot: ✅ Entendi seu pedido!
+
+✅ 2x Pizza Calabresa
+
+Deseja adicionar mais itens?
+
+Digite o número de outro produto, descreva outro pedido ou "finalizar" para continuar com o pagamento.
+```
+
+```
+Usuário: me dá uma pizza de quatro queijos e um refrigerante
+Bot: ✅ Entendi seu pedido!
+
+✅ 1x Pizza Quatro Queijos
+✅ 1x Refrigerante
+
+Deseja adicionar mais itens?
+
+Digite o número de outro produto, descreva outro pedido ou "finalizar" para continuar com o pagamento.
+```
+
+### 🎤 Mensagens de Áudio
+
+O chatbot suporta mensagens de áudio (notas de voz do WhatsApp):
+
+```
+[Cliente envia áudio]
+Bot: 🎤 Áudio transcrito: "quero pedir uma pizza de margherita"
+     Processando sua mensagem...
+
+Bot: ✅ Entendi seu pedido!
+
+✅ 1x Pizza Margherita
+
+Deseja adicionar mais itens?
+
+Digite o número de outro produto, descreva outro pedido ou "finalizar" para continuar com o pagamento.
+```
+
+### 💬 Perguntas e Dúvidas
+
+O chatbot responde a perguntas gerais:
+
+```
+Usuário: Qual o horário de funcionamento?
+Bot: Nossa pizzaria funciona de terça a domingo, das 18h às 23h! 🕐
+
+Usuário: Vocês aceitam cartão?
+Bot: Sim! Aceitamos cartão de crédito, débito, Pix e dinheiro em espécie! 💳
 ```
 
 ## 🗄️ Estrutura do Banco de Dados

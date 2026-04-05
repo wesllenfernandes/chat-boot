@@ -29,6 +29,9 @@ class WhatsAppController {
       }
     });
     
+    // Cache para evitar processamento de mensagens duplicadas
+    this.processedMessages = new Map();
+    
     this.setupEventListeners();
   }
   
@@ -75,12 +78,61 @@ class WhatsAppController {
   }
   
   async handleMessage(message) {
+    const messageId = message.id.id;
     const telefone = message.from;
-    const texto = message.body;
+    let texto = message.body;
+    
+    // Verificar se a mensagem já foi processada
+    if (this.processedMessages.has(messageId)) {
+      console.log(`⏭️  Mensagem ${messageId} já processada, ignorando...`);
+      return;
+    }
+    
+    // Marcar mensagem como processada
+    this.processedMessages.set(messageId, true);
+    
+    // Limpar cache antigo (manter apenas últimas 1000 mensagens)
+    if (this.processedMessages.size > 1000) {
+      const firstKey = this.processedMessages.keys().next().value;
+      this.processedMessages.delete(firstKey);
+    }
     
     // Ignorar mensagens de grupos
     if (message.from.includes('@g.us')) {
       return;
+    }
+    
+    // Verificar se é mensagem de áudio
+    if (message.hasMedia && (message.type === 'audio' || message.type === 'ptt')) {
+      try {
+        console.log('\n🎤 Mensagem de áudio recebida');
+        
+        const media = await message.downloadMedia();
+        
+        if (media && media.mimetype.startsWith('audio/')) {
+          const buffer = Buffer.from(media.data, 'base64');
+          
+          try {
+            const transcricao = await AIService.transcreverAudio(buffer);
+            texto = transcricao;
+            console.log(`\n📝 Transcrição do áudio: ${texto}`);
+            
+            // Enviar confirmação da transcrição
+            await message.reply(`🎤 Áudio transcrito: "${texto}"\n\nProcessando sua mensagem...`);
+          } catch (error) {
+            console.error('Erro ao transcrever áudio:', error);
+            await message.reply('❌ Não foi possível transcrever o áudio. Por favor, envie uma mensagem de texto ou tente novamente.');
+            return;
+          }
+        } else {
+          await message.reply('❌ Formato de áudio não suportado. Por favor, envie um áudio em formato MP3 ou OGG.');
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao processar mensagem de áudio:', error);
+        await message.reply('❌ Erro ao processar o áudio. Por favor, tente novamente.');
+        return;
+      }
     }
     
     // Log da mensagem recebida

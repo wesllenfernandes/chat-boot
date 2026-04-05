@@ -73,16 +73,16 @@ async function startServer() {
     console.log('📱 Inicializando WhatsApp Web...');
     whatsappController = new WhatsAppController();
     
-    // Adicionar listener para quando o WhatsApp estiver pronto
-    whatsappController.client.on('ready', () => {
+    await whatsappController.initialize();
+    
+    // Aguardar o WhatsApp estar pronto antes de iniciar o sistema de timeout
+    whatsappController.client.once('ready', () => {
       console.log('\n✅ Cliente WhatsApp conectado com sucesso!');
       console.log('🤖 Chatbot da Pizzaria está online!\n');
       
       // Iniciar sistema de timeout
       TimeoutService.iniciarVerificacao(whatsappController);
     });
-    
-    await whatsappController.initialize();
     
     // Iniciar servidor Express
     app.listen(PORT, () => {
