@@ -63,12 +63,14 @@ async function startServer() {
     console.log('🔌 Conectando ao banco de dados...');
     await testConnection();
     
-    // Remover tabelas de backup residuais que bloqueiam o alter
-    await sequelize.query('DROP TABLE IF EXISTS `clientes_backup`;').catch(() => {});
-
     // Sincronizar models com o banco
     console.log('📊 Sincronizando models com o banco de dados...');
+    await sequelize.query('PRAGMA foreign_keys = OFF;');
+    await sequelize.query('DROP TABLE IF EXISTS `clientes_backup`;');
+    await sequelize.query('DROP TABLE IF EXISTS `pedidos_backup`;');
+    await sequelize.query('DROP TABLE IF EXISTS `item_pedidos_backup`;');
     await sequelize.sync({ alter: true });
+    await sequelize.query('PRAGMA foreign_keys = ON;');
     console.log('✅ Models sincronizados com sucesso!');
     console.log('💾 O banco de dados será criado automaticamente em: database.sqlite');
     
