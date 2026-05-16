@@ -15,11 +15,14 @@ class ChatbotService {
     const cliente = await ClienteService.buscarOuCriar(telefone);
     const etapa = cliente.etapa_atual;
     
-    // Comando para reiniciar
-    if (msg === 'menu' || msg === 'reiniciar' || msg === 'cancelar') {
+    // Cancelamento em qualquer etapa
+    if (this.isCancelamento(msg)) {
+      const temItens = cliente.itens_pedido && cliente.itens_pedido.length > 0;
       await ClienteService.limparPedido(telefone);
       return {
-        resposta: formatarCardapio(),
+        resposta: temItens
+          ? '❌ *Pedido cancelado!*\n\nSeu pedido foi cancelado com sucesso. Se quiser fazer um novo pedido, é só escolher um item abaixo:\n\n' + formatarCardapio()
+          : '✅ Tudo certo! Se quiser fazer um pedido, é só escolher:\n\n' + formatarCardapio(),
         proximaEtapa: 'MENU'
       };
     }
@@ -481,6 +484,17 @@ Quantas unidades você gostaria de levar?`,
     }
   }
   
+  static isCancelamento(msg) {
+    const termos = [
+      'cancelar', 'cancelar pedido', 'cancela', 'cancela pedido',
+      'quero cancelar', 'desistir', 'desisti', 'desisto',
+      'nao quero mais', 'nao quero fazer pedido',
+      'esquece', 'esquece o pedido', 'esquecer',
+      'reiniciar', 'recomecar', 'comecar de novo', 'menu'
+    ];
+    return termos.some(t => msg === t || msg.startsWith(t + ' ') || msg.endsWith(' ' + t));
+  }
+
   static isPedidoGenerico(mensagem) {
     const texto = this.normalizarTexto(mensagem);
     const verbosPedido = ['quero', 'gostaria', 'queria', 'preciso', 'vou levar', 'me da', 'me de', 'pedir'];
