@@ -241,6 +241,9 @@
   let token = sessionStorage.getItem('adminToken');
   let produtos = [];
   let editandoId = null;
+  let horariosData = [];
+  let waPollingInterval = null;
+  let ultimoQr = null;
 
   if (token) mostrarPainel();
 
@@ -427,7 +430,6 @@
   });
 
   // ── Horários ──────────────────────────────────────────────
-  let horariosData = [];
 
   async function carregarHorarios() {
     try {
@@ -494,8 +496,6 @@
   }
 
   // ── WhatsApp ──────────────────────────────────────────────
-  let waPollingInterval = null;
-  let ultimoQr = null;
 
   function iniciarPollingWhatsApp() {
     verificarStatusWhatsApp();
