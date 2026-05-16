@@ -19,12 +19,13 @@ class ChatbotService {
     
     // Cancelamento em qualquer etapa
     if (this.isCancelamento(msg)) {
-      const temItens = cliente.itens_pedido && cliente.itens_pedido.length > 0;
+      const emFluxoPedido = etapa !== 'MENU'
+        || (cliente.itens_pedido && cliente.itens_pedido.length > 0);
       await ClienteService.limparPedido(telefone);
       return {
-        resposta: temItens
-          ? '❌ *Pedido cancelado!*\n\nSeu pedido foi cancelado com sucesso. Se quiser fazer um novo pedido, é só escolher um item abaixo:\n\n' + formatarCardapio()
-          : '✅ Tudo certo! Se quiser fazer um pedido, é só escolher:\n\n' + formatarCardapio(),
+        resposta: emFluxoPedido
+          ? '❌ *Pedido cancelado!*\n\nSeu pedido foi cancelado. Quando quiser fazer um novo pedido, é só escolher:\n\n' + formatarCardapio()
+          : formatarCardapio(),
         proximaEtapa: 'MENU'
       };
     }
