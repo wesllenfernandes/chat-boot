@@ -87,8 +87,8 @@ class ChatbotService {
       return await this.finalizarPedido(telefone);
     }
 
-    // Verificar horário de funcionamento sempre que o carrinho estiver vazio
-    if (itens.length === 0) {
+    // Verificar horário de funcionamento sempre que o carrinho estiver vazio e usuário não estiver em modo de agendamento
+    if (itens.length === 0 && !clienteAtualizado.agendando) {
       const ehPergunta = mensagem.includes('?');
       const temIntencaoPedido = !ehPergunta && (
         this.obterProdutoPorNumero(msg) !== null ||
