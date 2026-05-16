@@ -277,6 +277,10 @@
             <input type="text" id="eEstado" placeholder="SP" maxlength="2" style="text-transform:uppercase">
           </div>
         </div>
+        <div class="form-group" style="max-width:260px">
+          <label>Taxa de entrega — cidade sede (R$)</label>
+          <input type="number" id="eTaxaSede" step="0.01" min="0" placeholder="0.00">
+        </div>
         <div class="form-group">
           <label>Endereço da empresa</label>
           <input type="text" id="eEndereco" placeholder="Rua, número, bairro">
@@ -946,6 +950,7 @@
     document.getElementById('eEndereco').value = empresaData.endereco || '';
     document.getElementById('eCnpj').value = empresaData.cnpj || '';
     document.getElementById('eDescricao').value = empresaData.descricao || '';
+    document.getElementById('eTaxaSede').value = Number(empresaData.taxa_entrega_sede || 0).toFixed(2);
   }
 
   async function salvarEmpresa() {
@@ -958,7 +963,8 @@
       telefone: document.getElementById('eTelefone').value.trim(),
       endereco: document.getElementById('eEndereco').value.trim(),
       cnpj: document.getElementById('eCnpj').value.trim(),
-      descricao: document.getElementById('eDescricao').value.trim()
+      descricao: document.getElementById('eDescricao').value.trim(),
+      taxa_entrega_sede: parseFloat(document.getElementById('eTaxaSede').value) || 0
     };
     try {
       const res = await fetch('/admin/api/empresa', {
@@ -999,12 +1005,14 @@
     const tbody = document.getElementById('corpoCidades');
     if (!tbody) return;
     const sedeCidade = empresaData?.cidade || '';
+    const taxaSede = Number(empresaData?.taxa_entrega_sede || 0);
+    const taxaSedeLabel = taxaSede > 0 ? `R$ ${taxaSede.toFixed(2)}` : '<span style="color:#16a34a;font-weight:600">Gratuita</span>';
     const sedeRow = sedeCidade ? `
       <tr>
         <td><strong>${escHtml(sedeCidade)}</strong> <span class="badge badge-confirmado" style="font-size:0.7rem">sede</span></td>
-        <td style="color:#6b7280">—</td>
+        <td>${taxaSedeLabel}</td>
         <td><span class="badge badge-ativo">Sempre ativa</span></td>
-        <td><span style="color:#9ca3af;font-size:0.8rem">Gerenciada nos dados da empresa</span></td>
+        <td><span style="color:#9ca3af;font-size:0.8rem">Edite a taxa em "Dados da Empresa"</span></td>
       </tr>` : '';
 
     const extras = cidadesData

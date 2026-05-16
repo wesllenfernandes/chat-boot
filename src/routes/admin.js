@@ -130,13 +130,14 @@ router.get('/api/empresa', autenticar, async (req, res) => {
 router.put('/api/empresa', autenticar, async (req, res) => {
   try {
     const Empresa = require('../models/Empresa');
-    const { nome, cidade, estado, telefone, endereco, cnpj, descricao } = req.body;
+    const { nome, cidade, estado, telefone, endereco, cnpj, descricao, taxa_entrega_sede } = req.body;
     if (!nome || !cidade) return res.status(400).json({ erro: 'Nome e cidade são obrigatórios' });
     let empresa = await Empresa.findOne();
+    const dados = { nome, cidade, estado, telefone, endereco, cnpj, descricao, taxa_entrega_sede: taxa_entrega_sede || 0 };
     if (empresa) {
-      await empresa.update({ nome, cidade, estado, telefone, endereco, cnpj, descricao });
+      await empresa.update(dados);
     } else {
-      empresa = await Empresa.create({ nome, cidade, estado, telefone, endereco, cnpj, descricao });
+      empresa = await Empresa.create(dados);
     }
     res.json(empresa);
   } catch (error) {

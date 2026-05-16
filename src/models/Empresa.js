@@ -9,7 +9,8 @@ const Empresa = sequelize.define('Empresa', {
   telefone: { type: DataTypes.STRING(30), allowNull: true },
   endereco: { type: DataTypes.STRING(200), allowNull: true },
   cnpj: { type: DataTypes.STRING(20), allowNull: true },
-  descricao: { type: DataTypes.TEXT, allowNull: true }
+  descricao: { type: DataTypes.TEXT, allowNull: true },
+  taxa_entrega_sede: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 }
 }, { tableName: 'empresa', timestamps: true });
 
 module.exports = Empresa;

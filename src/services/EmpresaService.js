@@ -46,10 +46,10 @@ class EmpresaService {
     // Mapa: nome normalizado → { taxa, nomeOriginal, isSede }
     const mapa = {};
 
-    // Cidade sede sempre no mapa com taxa padrão 0
+    // Cidade sede com sua própria taxa
     if (temCidadeSede) {
       const sedeNorm = this.normalizarParaComparacao(empresa.cidade);
-      mapa[sedeNorm] = { taxa: 0, nome: empresa.cidade, isSede: true };
+      mapa[sedeNorm] = { taxa: Number(empresa.taxa_entrega_sede || 0), nome: empresa.cidade, isSede: true };
     }
 
     // Cidades do banco (podem sobrescrever taxa da sede)
