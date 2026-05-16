@@ -13,7 +13,7 @@ const Cliente = sequelize.define('Cliente', {
     unique: true
   },
   etapa_atual: {
-    type: DataTypes.ENUM('MENU', 'ESCOLHENDO_PRODUTO', 'QUANTIDADE', 'PAGAMENTO', 'NOME', 'ENDERECO', 'CONFIRMACAO'),
+    type: DataTypes.ENUM('MENU', 'ESCOLHENDO_PRODUTO', 'QUANTIDADE', 'PAGAMENTO', 'CIDADE', 'NOME', 'ENDERECO', 'CONFIRMACAO'),
     allowNull: false,
     defaultValue: 'MENU'
   },

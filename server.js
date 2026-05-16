@@ -10,6 +10,7 @@ const TimeoutService = require('./src/services/TimeoutService');
 const adminRoutes = require('./src/routes/admin');
 const { inicializar: inicializarCardapio } = require('./src/config/cardapio');
 const HorarioService = require('./src/services/HorarioService');
+const EmpresaService = require('./src/services/EmpresaService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -110,6 +111,10 @@ async function startServer() {
     // Inicializar horários de funcionamento
     await HorarioService.inicializar();
     console.log('🕐 Horários de funcionamento carregados!');
+
+    // Inicializar dados da empresa
+    await EmpresaService.inicializar();
+    console.log('🏢 Dados da empresa carregados!');
     console.log('💾 O banco de dados será criado automaticamente em: database.sqlite');
     
     // Inicializar WhatsApp

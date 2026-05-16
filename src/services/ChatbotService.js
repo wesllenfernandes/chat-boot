@@ -3,6 +3,7 @@ const ClienteService = require('./ClienteService');
 const PedidoService = require('./PedidoService');
 const AIService = require('./AIService');
 const HorarioService = require('./HorarioService');
+const EmpresaService = require('./EmpresaService');
 
 const RODAPE_CANCELAR = '\n\n_Digite *cancelar* a qualquer momento para cancelar o pedido._';
 
@@ -45,6 +46,9 @@ class ChatbotService {
         
       case 'PAGAMENTO':
         return await this.processarPagamento(telefone, msg, cliente, mensagem);
+
+      case 'CIDADE':
+        return await this.processarCidade(telefone, msg, cliente, mensagem);
 
       case 'NOME':
         return await this.processarNome(telefone, msg, cliente, mensagem);
@@ -416,10 +420,53 @@ Quantas unidades você gostaria de levar?`,
     }
 
     await ClienteService.atualizarProdutoSelecionado(telefone, { ...cliente.produto_selecionado, formaPagamento });
-    await ClienteService.atualizarEtapa(telefone, 'NOME');
+    await ClienteService.atualizarEtapa(telefone, 'CIDADE');
 
     return {
-      resposta: `✅ ${formaPagamento}! Perfeito.\n\nQual é o seu nome ou de quem vai receber o pedido?` + RODAPE_CANCELAR,
+      resposta: `✅ ${formaPagamento}! Perfeito.\n\n🌆 Em qual *cidade* será feita a entrega?` + RODAPE_CANCELAR,
+      proximaEtapa: 'CIDADE'
+    };
+  }
+
+  static async processarCidade(telefone, msg, cliente, mensagem) {
+    const cidadeInput = mensagem.trim();
+
+    if (cidadeInput.length < 2) {
+      return {
+        resposta: 'Por favor, informe o nome da cidade para entrega.' + RODAPE_CANCELAR,
+        proximaEtapa: 'CIDADE'
+      };
+    }
+
+    const resultado = await EmpresaService.validarCidade(cidadeInput);
+
+    if (!resultado.valida) {
+      await ClienteService.limparPedido(telefone);
+      let resposta = `❌ *Não realizamos entregas em "${cidadeInput}".*\n\n`;
+      if (resultado.listaCidades && resultado.listaCidades.length > 0) {
+        resposta += `Entregamos nas seguintes cidades:\n`;
+        resultado.listaCidades.forEach(c => { resposta += `• ${c}\n`; });
+        resposta += '\n';
+      }
+      resposta += 'Seu pedido foi cancelado. Quando quiser pedir de uma das cidades acima, é só chamar! 😊\n\n';
+      resposta += formatarCardapio();
+      return { resposta, proximaEtapa: 'MENU' };
+    }
+
+    const taxaEntrega = resultado.taxa || 0;
+    await ClienteService.atualizarProdutoSelecionado(telefone, {
+      ...cliente.produto_selecionado,
+      cidade: resultado.cidadeNome,
+      taxaEntrega
+    });
+    await ClienteService.atualizarEtapa(telefone, 'NOME');
+
+    const taxaMsg = taxaEntrega > 0
+      ? ` (taxa de entrega: R$ ${taxaEntrega.toFixed(2)})`
+      : ' (entrega gratuita)';
+
+    return {
+      resposta: `✅ *${resultado.cidadeNome}*${taxaMsg}!\n\nQual é o seu nome ou de quem vai receber o pedido?` + RODAPE_CANCELAR,
       proximaEtapa: 'NOME'
     };
   }
@@ -465,11 +512,12 @@ Quantas unidades você gostaria de levar?`,
 
     // Calcular total e formatar resumo
     const itens = cliente.itens_pedido;
-    const total = PedidoService.calcularTotal(itens);
     const formaPagamento = cliente.produto_selecionado.formaPagamento;
     const nomeDestinatario = cliente.produto_selecionado.nomeDestinatario || null;
+    const cidade = cliente.produto_selecionado.cidade || null;
+    const taxaEntrega = cliente.produto_selecionado.taxaEntrega || 0;
 
-    const resumo = PedidoService.formatarResumoPedido(itens, total, formaPagamento, endereco, nomeDestinatario);
+    const resumo = PedidoService.formatarResumoPedido(itens, formaPagamento, endereco, nomeDestinatario, cidade, taxaEntrega);
 
     return {
       resposta: resumo + '\n\nEstá tudo correto? Digite "sim" para confirmar ou "não" para cancelar.',
@@ -492,10 +540,12 @@ Quantas unidades você gostaria de levar?`,
     if (this.isRespostaAfirmativa(resposta)) {
       try {
         const itens = cliente.itens_pedido;
-        const total = PedidoService.calcularTotal(itens);
         const formaPagamento = cliente.produto_selecionado.formaPagamento;
         const endereco = cliente.produto_selecionado.endereco;
         const nomeDestinatario = cliente.produto_selecionado.nomeDestinatario || null;
+        const cidade = cliente.produto_selecionado.cidade || null;
+        const taxaEntrega = Number(cliente.produto_selecionado.taxaEntrega || 0);
+        const total = PedidoService.calcularTotal(itens) + taxaEntrega;
 
         const aberto = await HorarioService.isAberto();
         const agendado = !aberto;
@@ -511,15 +561,17 @@ Quantas unidades você gostaria de levar?`,
         }
 
         const pedido = await PedidoService.criarPedido(
-          cliente.id, total, formaPagamento, endereco, itens, agendado, dataAgendamento, nomeDestinatario
+          cliente.id, total, formaPagamento, endereco, itens, agendado, dataAgendamento, nomeDestinatario, cidade, taxaEntrega
         );
 
         await ClienteService.limparPedido(telefone);
 
         const nomeLabel = nomeDestinatario ? `\n👤 Nome: ${nomeDestinatario}` : '';
+        const cidadeLabel = cidade ? `\n🌆 Cidade: ${cidade}` : '';
+        const taxaLabel = taxaEntrega > 0 ? `\n🚚 Taxa de entrega: R$ ${taxaEntrega.toFixed(2)}` : '\n🚚 Entrega gratuita';
         const respostaFinal = agendado
-          ? `🗓️ *PEDIDO AGENDADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}${nomeLabel}\n📍 Endereço: ${endereco}\n\n⏰ *Entrega prevista: ${entregaFormatada}*\n\nSeu pedido será preparado assim que abrirmos! 🍕`
-          : `🎉 *PEDIDO CONFIRMADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}${nomeLabel}\n📍 Endereço: ${endereco}\n\n⏱️ Tempo estimado de entrega: 40-50 minutos\n\nObrigado pela preferência! 🍕`;
+          ? `🗓️ *PEDIDO AGENDADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}${taxaLabel}\n💳 Pagamento: ${formaPagamento}${nomeLabel}${cidadeLabel}\n📍 Endereço: ${endereco}\n\n⏰ *Entrega prevista: ${entregaFormatada}*\n\nSeu pedido será preparado assim que abrirmos! 🍕`
+          : `🎉 *PEDIDO CONFIRMADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}${taxaLabel}\n💳 Pagamento: ${formaPagamento}${nomeLabel}${cidadeLabel}\n📍 Endereço: ${endereco}\n\n⏱️ Tempo estimado de entrega: 40-50 minutos\n\nObrigado pela preferência! 🍕`;
 
         return { resposta: respostaFinal, proximaEtapa: 'MENU' };
       } catch (error) {

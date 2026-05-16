@@ -4,6 +4,8 @@ const ItemPedido = require('./ItemPedido');
 const CacheIA = require('./CacheIA');
 const Produto = require('./Produto');
 const HorarioFuncionamento = require('./HorarioFuncionamento');
+const Empresa = require('./Empresa');
+const CidadeEntrega = require('./CidadeEntrega');
 
 // Definir relacionamentos
 Cliente.hasMany(Pedido, { foreignKey: 'cliente_id', as: 'pedidos' });
@@ -18,5 +20,7 @@ module.exports = {
   ItemPedido,
   CacheIA,
   Produto,
-  HorarioFuncionamento
+  HorarioFuncionamento,
+  Empresa,
+  CidadeEntrega
 };

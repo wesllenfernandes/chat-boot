@@ -31,6 +31,15 @@ const Pedido = sequelize.define('Pedido', {
     type: DataTypes.STRING(100),
     allowNull: true
   },
+  cidade: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  taxa_entrega: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
   status: {
     type: DataTypes.ENUM('pendente', 'confirmado', 'em_preparo', 'enviado', 'entregue', 'cancelado'),
     allowNull: false,

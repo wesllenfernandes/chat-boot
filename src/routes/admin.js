@@ -116,6 +116,82 @@ router.post('/api/whatsapp/reconnect', autenticar, async (req, res) => {
   }
 });
 
+// ── Empresa ───────────────────────────────────────────────
+router.get('/api/empresa', autenticar, async (req, res) => {
+  try {
+    const Empresa = require('../models/Empresa');
+    const empresa = await Empresa.findOne();
+    res.json(empresa || {});
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.put('/api/empresa', autenticar, async (req, res) => {
+  try {
+    const Empresa = require('../models/Empresa');
+    const { nome, cidade, estado, telefone, endereco, cnpj, descricao } = req.body;
+    if (!nome || !cidade) return res.status(400).json({ erro: 'Nome e cidade são obrigatórios' });
+    let empresa = await Empresa.findOne();
+    if (empresa) {
+      await empresa.update({ nome, cidade, estado, telefone, endereco, cnpj, descricao });
+    } else {
+      empresa = await Empresa.create({ nome, cidade, estado, telefone, endereco, cnpj, descricao });
+    }
+    res.json(empresa);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+// ── Cidades de Entrega ────────────────────────────────────
+router.get('/api/cidades-entrega', autenticar, async (req, res) => {
+  try {
+    const CidadeEntrega = require('../models/CidadeEntrega');
+    const cidades = await CidadeEntrega.findAll({ order: [['cidade', 'ASC']] });
+    res.json(cidades);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.post('/api/cidades-entrega', autenticar, async (req, res) => {
+  try {
+    const CidadeEntrega = require('../models/CidadeEntrega');
+    const { cidade, taxa_entrega, ativa } = req.body;
+    if (!cidade) return res.status(400).json({ erro: 'Nome da cidade é obrigatório' });
+    const nova = await CidadeEntrega.create({ cidade: cidade.trim(), taxa_entrega: taxa_entrega || 0, ativa: ativa !== false });
+    res.status(201).json(nova);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.put('/api/cidades-entrega/:id', autenticar, async (req, res) => {
+  try {
+    const CidadeEntrega = require('../models/CidadeEntrega');
+    const cidade = await CidadeEntrega.findByPk(req.params.id);
+    if (!cidade) return res.status(404).json({ erro: 'Cidade não encontrada' });
+    const { cidade: nome, taxa_entrega, ativa } = req.body;
+    await cidade.update({ cidade: nome || cidade.cidade, taxa_entrega: taxa_entrega ?? cidade.taxa_entrega, ativa: ativa !== undefined ? ativa : cidade.ativa });
+    res.json(cidade);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.delete('/api/cidades-entrega/:id', autenticar, async (req, res) => {
+  try {
+    const CidadeEntrega = require('../models/CidadeEntrega');
+    const cidade = await CidadeEntrega.findByPk(req.params.id);
+    if (!cidade) return res.status(404).json({ erro: 'Cidade não encontrada' });
+    await cidade.destroy();
+    res.json({ sucesso: true });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
 router.get('/api/pedidos', autenticar, async (req, res) => {
   try {
     const { Cliente, Pedido, ItemPedido } = require('../models');

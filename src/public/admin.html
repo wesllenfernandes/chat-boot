@@ -163,6 +163,7 @@
 
   <nav class="tab-nav">
     <button class="tab-btn active" onclick="mostrarTab('pedidos', this)">📋 Pedidos</button>
+    <button class="tab-btn" onclick="mostrarTab('empresa', this)">🏢 Empresa</button>
     <button class="tab-btn" onclick="mostrarTab('horarios', this)">🕐 Horários</button>
     <button class="tab-btn" onclick="mostrarTab('whatsapp', this)">📱 WhatsApp</button>
     <button class="tab-btn" onclick="mostrarTab('cardapio', this)">🍕 Cardápio</button>
@@ -233,6 +234,7 @@
                 <th>Nome</th>
                 <th>Telefone</th>
                 <th>Itens do Pedido</th>
+                <th>Cidade</th>
                 <th>Endereço</th>
                 <th>Pagamento</th>
                 <th>Total</th>
@@ -241,7 +243,75 @@
               </tr>
             </thead>
             <tbody id="corpoPedidos">
-              <tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:2.5rem">Carregando...</td></tr>
+              <tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:2.5rem">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB EMPRESA -->
+    <div id="tab-empresa" class="tab-content hidden">
+      <div class="card">
+        <div class="toolbar">
+          <h2>🏢 Dados da Empresa</h2>
+          <button class="btn btn-primary" onclick="salvarEmpresa()">Salvar Dados</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome da Empresa *</label>
+            <input type="text" id="eNome" placeholder="Ex: Pizzaria Otaliva">
+          </div>
+          <div class="form-group">
+            <label>CNPJ</label>
+            <input type="text" id="eCnpj" placeholder="00.000.000/0000-00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cidade sede *</label>
+            <input type="text" id="eCidade" placeholder="Ex: São Paulo">
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <input type="text" id="eEstado" placeholder="SP" maxlength="2" style="text-transform:uppercase">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Endereço da empresa</label>
+          <input type="text" id="eEndereco" placeholder="Rua, número, bairro">
+        </div>
+        <div class="form-group">
+          <label>Telefone / WhatsApp</label>
+          <input type="text" id="eTelefone" placeholder="(11) 9 9999-9999">
+        </div>
+        <div class="form-group">
+          <label>Descrição para o chatbot</label>
+          <textarea id="eDescricao" rows="3" placeholder="Breve descrição da pizzaria que o chatbot pode usar ao apresentar a empresa..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <h2>🚚 Cidades de Entrega</h2>
+          <button class="btn btn-primary" onclick="abrirModalCidade()">+ Adicionar Cidade</button>
+        </div>
+        <p style="color:#6b7280;font-size:0.85rem;margin-bottom:1.2rem">
+          A cidade sede é sempre aceita automaticamente. Adicione outras cidades para expandir a área de entrega.
+          Se não houver cidades configuradas, o chatbot aceita qualquer cidade.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Cidade</th>
+                <th>Taxa de Entrega</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="corpoCidades">
+              <tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:2rem">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -329,6 +399,30 @@
   </main>
 </div>
 
+<!-- MODAL CIDADE DE ENTREGA -->
+<div id="modalCidadeOverlay" class="overlay">
+  <div class="modal" style="width:420px">
+    <h2 id="modalCidadeTitulo">Cidade de Entrega</h2>
+    <div class="form-group">
+      <label>Nome da Cidade *</label>
+      <input type="text" id="cNome" placeholder="Ex: Campinas">
+    </div>
+    <div class="form-group">
+      <label>Taxa de Entrega (R$)</label>
+      <input type="number" id="cTaxa" step="0.01" min="0" placeholder="0.00">
+    </div>
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="cAtivo" checked> Cidade ativa (aceitar pedidos desta cidade)
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModalCidade()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCidade()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PRODUTO -->
 <div id="modalOverlay" class="overlay">
   <div class="modal">
@@ -377,6 +471,9 @@
   let pedidosData = [];
   let pedidosFiltrados = [];
   let pedidosAutoRefreshInterval = null;
+  let empresaData = null;
+  let cidadesData = [];
+  let editandoCidadeId = null;
 
   if (token) mostrarPainel();
 
@@ -433,6 +530,8 @@
     carregarPedidos();
     carregarProdutos();
     carregarHorarios();
+    carregarEmpresa();
+    carregarCidades();
     iniciarPollingWhatsApp();
   }
 
@@ -508,7 +607,7 @@
   function renderizarPedidos() {
     const tbody = document.getElementById('corpoPedidos');
     if (pedidosFiltrados.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:2.5rem">Nenhum pedido encontrado para o filtro selecionado</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:2.5rem">Nenhum pedido encontrado para o filtro selecionado</td></tr>';
       return;
     }
     tbody.innerHTML = pedidosFiltrados.map(p => {
@@ -517,6 +616,10 @@
         ? '🗓️ ' + formatarDataHora(p.data_agendamento)
         : '⚡ Imediata (~40 min)';
       const tel = formatarTelefone(p.cliente?.telefone);
+      const taxa = Number(p.taxa_entrega || 0);
+      const totalLabel = taxa > 0
+        ? `<strong>R$ ${Number(p.total).toFixed(2)}</strong><br><span style="font-size:0.75rem;color:#6b7280">+R$ ${taxa.toFixed(2)} entrega</span>`
+        : `<strong>R$ ${Number(p.total).toFixed(2)}</strong>`;
       const opts = STATUS_OPTS.map(([v, l]) => `<option value="${v}"${p.status === v ? ' selected' : ''}>${l}</option>`).join('');
       return `
         <tr>
@@ -525,9 +628,10 @@
           <td><strong>${escHtml(p.nome_destinatario || '—')}</strong></td>
           <td style="white-space:nowrap;font-size:0.82rem">${tel}</td>
           <td class="itens-cell">${itens || '—'}</td>
+          <td style="white-space:nowrap;font-size:0.85rem">${escHtml(p.cidade || '—')}</td>
           <td class="end-cell">${escHtml(p.endereco || '—')}</td>
           <td style="white-space:nowrap">${p.forma_pagamento || '—'}</td>
-          <td style="white-space:nowrap"><strong>R$ ${Number(p.total).toFixed(2)}</strong></td>
+          <td style="white-space:nowrap">${totalLabel}</td>
           <td style="font-size:0.82rem;white-space:nowrap">${entrega}</td>
           <td><select class="select-status" onchange="atualizarStatusPedido(${p.id}, this.value)">${opts}</select></td>
         </tr>`;
@@ -568,7 +672,7 @@
 
   function exportarCSV() {
     if (pedidosFiltrados.length === 0) { mostrarAlerta('Nenhum pedido para exportar.', 'error'); return; }
-    const cab = ['#','Data','Hora','Nome','Telefone','Itens','Endereço','Pagamento','Total','Entrega Prevista','Agendado','Status'];
+    const cab = ['#','Data','Hora','Nome','Telefone','Itens','Cidade','Endereço','Pagamento','Total','Taxa Entrega','Entrega Prevista','Agendado','Status'];
     const linhas = pedidosFiltrados.map(p => {
       const d = new Date(p.createdAt);
       const itens = (p.itens || []).map(i => `${i.quantidade}x ${i.produto}`).join(' | ');
@@ -580,9 +684,11 @@
         p.nome_destinatario || '',
         formatarTelefone(p.cliente?.telefone),
         itens,
+        p.cidade || '',
         (p.endereco || '').replace(/"/g, "'"),
         p.forma_pagamento || '',
         Number(p.total).toFixed(2),
+        Number(p.taxa_entrega || 0).toFixed(2),
         entrega,
         p.agendado ? 'Sim' : 'Não',
         p.status
@@ -819,6 +925,161 @@
     mostrarAlerta('Iniciando reconexão, aguarde...', 'success');
     const res = await fetch('/admin/api/whatsapp/reconnect', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) mostrarAlerta('Erro ao reconectar.', 'error');
+  }
+
+  // ── Empresa ───────────────────────────────────────────────
+  async function carregarEmpresa() {
+    try {
+      const res = await fetch('/admin/api/empresa', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      empresaData = await res.json();
+      preencherFormEmpresa();
+    } catch {}
+  }
+
+  function preencherFormEmpresa() {
+    if (!empresaData) return;
+    document.getElementById('eNome').value = empresaData.nome || '';
+    document.getElementById('eCidade').value = empresaData.cidade || '';
+    document.getElementById('eEstado').value = empresaData.estado || '';
+    document.getElementById('eTelefone').value = empresaData.telefone || '';
+    document.getElementById('eEndereco').value = empresaData.endereco || '';
+    document.getElementById('eCnpj').value = empresaData.cnpj || '';
+    document.getElementById('eDescricao').value = empresaData.descricao || '';
+  }
+
+  async function salvarEmpresa() {
+    const nome = document.getElementById('eNome').value.trim();
+    const cidade = document.getElementById('eCidade').value.trim();
+    if (!nome || !cidade) { mostrarAlerta('Nome e cidade são obrigatórios.', 'error'); return; }
+    const dados = {
+      nome, cidade,
+      estado: document.getElementById('eEstado').value.trim().toUpperCase(),
+      telefone: document.getElementById('eTelefone').value.trim(),
+      endereco: document.getElementById('eEndereco').value.trim(),
+      cnpj: document.getElementById('eCnpj').value.trim(),
+      descricao: document.getElementById('eDescricao').value.trim()
+    };
+    try {
+      const res = await fetch('/admin/api/empresa', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(dados)
+      });
+      if (res.ok) {
+        empresaData = await res.json();
+        mostrarAlerta('Dados da empresa salvos!', 'success');
+        renderizarCidades();
+      } else {
+        const err = await res.json();
+        mostrarAlerta(err.erro || 'Erro ao salvar.', 'error');
+      }
+    } catch { mostrarAlerta('Erro ao conectar.', 'error'); }
+  }
+
+  // ── Cidades de Entrega ────────────────────────────────────
+  async function carregarCidades() {
+    try {
+      const [empRes, cidRes] = await Promise.all([
+        fetch('/admin/api/empresa', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/admin/api/cidades-entrega', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      if (empRes.ok) empresaData = await empRes.json();
+      cidadesData = cidRes.ok ? await cidRes.json() : [];
+      preencherFormEmpresa();
+      renderizarCidades();
+    } catch {}
+  }
+
+  function normCidade(s) {
+    return (s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  function renderizarCidades() {
+    const tbody = document.getElementById('corpoCidades');
+    if (!tbody) return;
+    const sedeCidade = empresaData?.cidade || '';
+    const sedeRow = sedeCidade ? `
+      <tr>
+        <td><strong>${escHtml(sedeCidade)}</strong> <span class="badge badge-confirmado" style="font-size:0.7rem">sede</span></td>
+        <td style="color:#6b7280">—</td>
+        <td><span class="badge badge-ativo">Sempre ativa</span></td>
+        <td><span style="color:#9ca3af;font-size:0.8rem">Gerenciada nos dados da empresa</span></td>
+      </tr>` : '';
+
+    const extras = cidadesData
+      .filter(c => normCidade(c.cidade) !== normCidade(sedeCidade))
+      .map(c => `
+        <tr>
+          <td><strong>${escHtml(c.cidade)}</strong></td>
+          <td>R$ ${Number(c.taxa_entrega).toFixed(2)}</td>
+          <td><span class="badge ${c.ativa ? 'badge-ativo' : 'badge-inativo'}">${c.ativa ? 'Ativa' : 'Inativa'}</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-secondary btn-sm" onclick="abrirModalCidade(${c.id})">✏️ Editar</button>
+              <button class="btn btn-warning btn-sm" onclick="deletarCidade(${c.id}, '${escHtml(c.cidade)}')">🗑️ Remover</button>
+            </div>
+          </td>
+        </tr>`).join('');
+
+    tbody.innerHTML = sedeRow + extras;
+    if (!sedeRow && cidadesData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:2rem">Nenhuma cidade configurada. Cadastre a cidade sede nos Dados da Empresa.</td></tr>';
+    }
+  }
+
+  function abrirModalCidade(id) {
+    editandoCidadeId = id || null;
+    const c = id ? cidadesData.find(x => x.id === id) : null;
+    document.getElementById('modalCidadeTitulo').textContent = c ? '✏️ Editar Cidade' : '➕ Nova Cidade de Entrega';
+    document.getElementById('cNome').value = c ? c.cidade : '';
+    document.getElementById('cTaxa').value = c ? Number(c.taxa_entrega).toFixed(2) : '0.00';
+    document.getElementById('cAtivo').checked = c ? !!c.ativa : true;
+    document.getElementById('modalCidadeOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('cNome').focus(), 100);
+  }
+
+  function fecharModalCidade() {
+    document.getElementById('modalCidadeOverlay').classList.remove('open');
+  }
+
+  document.getElementById('modalCidadeOverlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalCidade();
+  });
+
+  async function salvarCidade() {
+    const cidade = document.getElementById('cNome').value.trim();
+    const taxa_entrega = parseFloat(document.getElementById('cTaxa').value) || 0;
+    const ativa = document.getElementById('cAtivo').checked;
+    if (!cidade) { mostrarAlerta('Nome da cidade é obrigatório.', 'error'); return; }
+    const url = editandoCidadeId ? `/admin/api/cidades-entrega/${editandoCidadeId}` : '/admin/api/cidades-entrega';
+    const method = editandoCidadeId ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cidade, taxa_entrega, ativa })
+      });
+      if (res.ok) {
+        fecharModalCidade();
+        mostrarAlerta(editandoCidadeId ? 'Cidade atualizada!' : 'Cidade adicionada!', 'success');
+        carregarCidades();
+      } else {
+        const err = await res.json();
+        mostrarAlerta(err.erro || 'Erro ao salvar.', 'error');
+      }
+    } catch { mostrarAlerta('Erro ao conectar.', 'error'); }
+  }
+
+  async function deletarCidade(id, nome) {
+    if (!confirm(`Remover "${nome}" da área de entrega?`)) return;
+    try {
+      const res = await fetch(`/admin/api/cidades-entrega/${id}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) { mostrarAlerta('Cidade removida!', 'success'); carregarCidades(); }
+      else mostrarAlerta('Erro ao remover cidade.', 'error');
+    } catch { mostrarAlerta('Erro ao conectar.', 'error'); }
   }
 
   // ── Alerta global ─────────────────────────────────────────
