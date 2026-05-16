@@ -33,6 +33,28 @@ app.get('/status', (req, res) => {
   });
 });
 
+app.get('/cache', async (req, res) => {
+  const cache = require('./src/services/CacheService');
+  const { tipo } = req.query;
+  const [stats, entradas] = await Promise.all([
+    cache.estatisticas(),
+    cache.listar(tipo || null)
+  ]);
+  res.json({ stats, entradas });
+});
+
+app.delete('/cache', async (req, res) => {
+  const cache = require('./src/services/CacheService');
+  await cache.limparTudo();
+  res.json({ mensagem: 'Cache completamente limpo.' });
+});
+
+app.delete('/cache/:id', async (req, res) => {
+  const cache = require('./src/services/CacheService');
+  const removido = await cache.limparEntrada(Number(req.params.id));
+  res.json({ removido });
+});
+
 app.get('/pedidos/:telefone', async (req, res) => {
   try {
     const { PedidoService } = require('./src/services/PedidoService');
