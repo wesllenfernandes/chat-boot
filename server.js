@@ -63,6 +63,9 @@ async function startServer() {
     console.log('🔌 Conectando ao banco de dados...');
     await testConnection();
     
+    // Remover tabelas de backup residuais que bloqueiam o alter
+    await sequelize.query('DROP TABLE IF EXISTS `clientes_backup`;').catch(() => {});
+
     // Sincronizar models com o banco
     console.log('📊 Sincronizando models com o banco de dados...');
     await sequelize.sync({ alter: true });
