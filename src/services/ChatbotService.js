@@ -2,6 +2,7 @@ const { cardapio, formatarCardapio, buscarProduto } = require('../config/cardapi
 const ClienteService = require('./ClienteService');
 const PedidoService = require('./PedidoService');
 const AIService = require('./AIService');
+const HorarioService = require('./HorarioService');
 
 const RODAPE_CANCELAR = '\n\n_Digite *cancelar* a qualquer momento para cancelar o pedido._';
 
@@ -83,6 +84,39 @@ class ChatbotService {
     if (itens.length > 0 && indicadoresFinalizar.some(indicador => msg.includes(indicador))) {
       console.log('Cliente quer finalizar pedido');
       return await this.finalizarPedido(telefone);
+    }
+
+    // Verificar horário de funcionamento na primeira intenção de pedido (carrinho vazio)
+    if (itens.length === 0 && !cliente.agendando) {
+      const ehPergunta = mensagem.includes('?');
+      const temIntencaoPedido = !ehPergunta && (
+        this.obterProdutoPorNumero(msg) !== null ||
+        this.extrairProdutosDaMensagem(mensagem).length > 0 ||
+        indicadoresPedido.some(i => msg.includes(i)) ||
+        this.isPedidoGenerico(mensagem)
+      );
+
+      if (temIntencaoPedido) {
+        const aberto = await HorarioService.isAberto();
+        if (!aberto) {
+          const proxima = await HorarioService.proximaAbertura();
+          await ClienteService.setAgendando(telefone, true);
+
+          let resposta = '⏰ *Estamos fechados no momento!*\n\n';
+          if (proxima) {
+            const abertura = HorarioService.formatarDataHora(proxima.data);
+            const entrega = HorarioService.formatarDataHora(proxima.previsaoEntrega);
+            resposta += `Nossa próxima abertura é *${abertura}*.\n\n`;
+            resposta += `Mas você pode *agendar seu pedido agora* 😊\n`;
+            resposta += `Assim que abrirmos, seu pedido será preparado e a entrega prevista é para *${entrega}*.\n\n`;
+            resposta += `Continue escolhendo os itens normalmente!\n\n`;
+          } else {
+            resposta += `Não temos horário de reabertura disponível no momento. Tente mais tarde.\n\n`;
+          }
+          resposta += formatarCardapio() + RODAPE_CANCELAR;
+          return { resposta, proximaEtapa: 'MENU' };
+        }
+      }
     }
 
     const produtoSelecionadoPorNumero = this.obterProdutoPorNumero(msg);
@@ -446,28 +480,35 @@ Quantas unidades você gostaria de levar?`,
 
     if (this.isRespostaAfirmativa(resposta)) {
       try {
-        // Recuperar dados do pedido
         const itens = cliente.itens_pedido;
         const total = PedidoService.calcularTotal(itens);
         const formaPagamento = cliente.produto_selecionado.formaPagamento;
         const endereco = cliente.produto_selecionado.endereco;
 
-        // Criar pedido no banco
+        const aberto = await HorarioService.isAberto();
+        const agendado = !aberto;
+        let dataAgendamento = null;
+        let entregaFormatada = '40-50 minutos';
+
+        if (agendado) {
+          const proxima = await HorarioService.proximaAbertura();
+          if (proxima) {
+            dataAgendamento = proxima.data;
+            entregaFormatada = HorarioService.formatarDataHora(proxima.previsaoEntrega);
+          }
+        }
+
         const pedido = await PedidoService.criarPedido(
-          cliente.id,
-          total,
-          formaPagamento,
-          endereco,
-          itens
+          cliente.id, total, formaPagamento, endereco, itens, agendado, dataAgendamento
         );
 
-        // Limpar dados do cliente
         await ClienteService.limparPedido(telefone);
 
-        return {
-          resposta: `🎉 *PEDIDO CONFIRMADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}\n📍 Endereço: ${endereco}\n\n⏱️ Tempo estimado de entrega: 40-50 minutos\n\nObrigado pela preferência! 🍕`,
-          proximaEtapa: 'MENU'
-        };
+        const respostaFinal = agendado
+          ? `🗓️ *PEDIDO AGENDADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}\n📍 Endereço: ${endereco}\n\n⏰ *Entrega prevista: ${entregaFormatada}*\n\nSeu pedido será preparado assim que abrirmos! 🍕`
+          : `🎉 *PEDIDO CONFIRMADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}\n📍 Endereço: ${endereco}\n\n⏱️ Tempo estimado de entrega: 40-50 minutos\n\nObrigado pela preferência! 🍕`;
+
+        return { resposta: respostaFinal, proximaEtapa: 'MENU' };
       } catch (error) {
         console.error('Erro ao criar pedido:', error);
         return {

@@ -1,17 +1,18 @@
 const { Pedido, ItemPedido, Cliente } = require('../models');
 
 class PedidoService {
-  static async criarPedido(clienteId, total, formaPagamento, endereco, itens) {
+  static async criarPedido(clienteId, total, formaPagamento, endereco, itens, agendado = false, dataAgendamento = null) {
     const transaction = await Pedido.sequelize.transaction();
-    
+
     try {
-      // Criar o pedido
       const pedido = await Pedido.create({
         cliente_id: clienteId,
         total,
         forma_pagamento: formaPagamento,
         endereco,
-        status: 'confirmado'
+        status: 'confirmado',
+        agendado,
+        data_agendamento: dataAgendamento
       }, { transaction });
       
       // Criar os itens do pedido

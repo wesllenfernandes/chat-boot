@@ -54,15 +54,20 @@ class ClienteService {
 
   static async limparPedido(telefone) {
     await Cliente.update(
-      { 
+      {
         itens_pedido: [],
         produto_selecionado: null,
         etapa_atual: 'MENU',
         ultima_interacao: new Date(),
-        aviso_timeout_enviado: false
+        aviso_timeout_enviado: false,
+        agendando: false
       },
       { where: { telefone } }
     );
+  }
+
+  static async setAgendando(telefone, agendando) {
+    await Cliente.update({ agendando }, { where: { telefone } });
   }
 
   static async resetarEtapa(telefone) {

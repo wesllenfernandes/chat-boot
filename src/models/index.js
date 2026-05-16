@@ -3,6 +3,7 @@ const Pedido = require('./Pedido');
 const ItemPedido = require('./ItemPedido');
 const CacheIA = require('./CacheIA');
 const Produto = require('./Produto');
+const HorarioFuncionamento = require('./HorarioFuncionamento');
 
 // Definir relacionamentos
 Cliente.hasMany(Pedido, { foreignKey: 'cliente_id', as: 'pedidos' });
@@ -16,5 +17,6 @@ module.exports = {
   Pedido,
   ItemPedido,
   CacheIA,
-  Produto
+  Produto,
+  HorarioFuncionamento
 };

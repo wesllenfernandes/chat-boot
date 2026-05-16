@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const router = express.Router();
 const Produto = require('../models/Produto');
+const HorarioFuncionamento = require('../models/HorarioFuncionamento');
 const { recarregar } = require('../config/cardapio');
 
 const autenticar = (req, res, next) => {
@@ -58,6 +59,30 @@ router.put('/api/produtos/:id', autenticar, async (req, res) => {
     await produto.update({ nome, preco, tipo, descricao, ativo });
     await recarregar();
     res.json(produto);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.get('/api/horarios', autenticar, async (req, res) => {
+  try {
+    const horarios = await HorarioFuncionamento.findAll({ order: [['dia_semana', 'ASC']] });
+    res.json(horarios);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.put('/api/horarios', autenticar, async (req, res) => {
+  try {
+    const { horarios } = req.body; // array de { dia_semana, aberto, hora_abertura, hora_fechamento }
+    for (const h of horarios) {
+      await HorarioFuncionamento.update(
+        { aberto: h.aberto, hora_abertura: h.hora_abertura, hora_fechamento: h.hora_fechamento },
+        { where: { dia_semana: h.dia_semana } }
+      );
+    }
+    res.json({ sucesso: true });
   } catch (error) {
     res.status(500).json({ erro: error.message });
   }

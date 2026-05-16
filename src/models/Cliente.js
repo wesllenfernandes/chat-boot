@@ -32,6 +32,10 @@ const Cliente = sequelize.define('Cliente', {
   aviso_timeout_enviado: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  agendando: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   tableName: 'clientes',

@@ -31,6 +31,14 @@ const Pedido = sequelize.define('Pedido', {
     type: DataTypes.ENUM('pendente', 'confirmado', 'em_preparo', 'enviado', 'entregue', 'cancelado'),
     allowNull: false,
     defaultValue: 'pendente'
+  },
+  agendado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  data_agendamento: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   tableName: 'pedidos',

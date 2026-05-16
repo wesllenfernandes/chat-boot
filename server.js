@@ -8,6 +8,7 @@ const WhatsAppController = require('./src/controllers/WhatsAppController');
 const TimeoutService = require('./src/services/TimeoutService');
 const adminRoutes = require('./src/routes/admin');
 const { inicializar: inicializarCardapio } = require('./src/config/cardapio');
+const HorarioService = require('./src/services/HorarioService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -104,6 +105,10 @@ async function startServer() {
     // Inicializar cardápio (seed + carregar do banco)
     await inicializarCardapio();
     console.log('🍕 Cardápio carregado do banco de dados!');
+
+    // Inicializar horários de funcionamento
+    await HorarioService.inicializar();
+    console.log('🕐 Horários de funcionamento carregados!');
     console.log('💾 O banco de dados será criado automaticamente em: database.sqlite');
     
     // Inicializar WhatsApp

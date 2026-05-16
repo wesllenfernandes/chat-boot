@@ -125,6 +125,29 @@
   <main>
     <div id="alerta" class="alert hidden"></div>
 
+    <!-- HORÁRIOS -->
+    <div class="card">
+      <div class="toolbar">
+        <h2>🕐 Horários de Funcionamento</h2>
+        <button class="btn btn-primary" onclick="salvarHorarios()">Salvar Horários</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tabelaHorarios">
+          <thead>
+            <tr>
+              <th>Dia</th>
+              <th>Aberto</th>
+              <th>Abertura</th>
+              <th>Fechamento</th>
+            </tr>
+          </thead>
+          <tbody id="corpoHorarios">
+            <tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:2rem">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- WHATSAPP -->
     <div class="card">
       <div class="toolbar" style="margin-bottom:1.2rem">
@@ -262,6 +285,7 @@
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('painel').classList.remove('hidden');
     carregarProdutos();
+    carregarHorarios();
     iniciarPollingWhatsApp();
   }
 
@@ -401,6 +425,73 @@
   document.getElementById('modalOverlay').addEventListener('click', function(e) {
     if (e.target === this) fecharModal();
   });
+
+  // ── Horários ──────────────────────────────────────────────
+  let horariosData = [];
+
+  async function carregarHorarios() {
+    try {
+      const res = await fetch('/admin/api/horarios', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      horariosData = await res.json();
+      renderizarHorarios();
+    } catch { mostrarAlerta('Erro ao carregar horários.', 'error'); }
+  }
+
+  function renderizarHorarios() {
+    const tbody = document.getElementById('corpoHorarios');
+    tbody.innerHTML = horariosData.map(h => `
+      <tr data-dia="${h.dia_semana}">
+        <td><strong>${h.nome}</strong></td>
+        <td>
+          <label class="checkbox-label">
+            <input type="checkbox" ${h.aberto ? 'checked' : ''} onchange="toggleDia(${h.dia_semana}, this.checked)">
+            <span class="badge ${h.aberto ? 'badge-ativo' : 'badge-inativo'}">${h.aberto ? 'Aberto' : 'Fechado'}</span>
+          </label>
+        </td>
+        <td><input type="time" value="${h.hora_abertura}" data-campo="abertura" data-dia="${h.dia_semana}" style="width:110px" ${!h.aberto ? 'disabled' : ''}></td>
+        <td><input type="time" value="${h.hora_fechamento}" data-campo="fechamento" data-dia="${h.dia_semana}" style="width:110px" ${!h.aberto ? 'disabled' : ''}></td>
+      </tr>
+    `).join('');
+  }
+
+  function toggleDia(dia, aberto) {
+    const h = horariosData.find(x => x.dia_semana === dia);
+    if (h) h.aberto = aberto;
+    const row = document.querySelector(`tr[data-dia="${dia}"]`);
+    row.querySelectorAll('input[type=time]').forEach(i => i.disabled = !aberto);
+    const badge = row.querySelector('.badge');
+    badge.textContent = aberto ? 'Aberto' : 'Fechado';
+    badge.className = `badge ${aberto ? 'badge-ativo' : 'badge-inativo'}`;
+  }
+
+  async function salvarHorarios() {
+    // Coletar valores atuais dos inputs
+    const horarios = horariosData.map(h => {
+      const abertura = document.querySelector(`input[data-campo="abertura"][data-dia="${h.dia_semana}"]`);
+      const fechamento = document.querySelector(`input[data-campo="fechamento"][data-dia="${h.dia_semana}"]`);
+      return {
+        dia_semana: h.dia_semana,
+        aberto: h.aberto,
+        hora_abertura: abertura?.value || h.hora_abertura,
+        hora_fechamento: fechamento?.value || h.hora_fechamento
+      };
+    });
+
+    try {
+      const res = await fetch('/admin/api/horarios', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ horarios })
+      });
+      if (res.ok) {
+        mostrarAlerta('Horários salvos com sucesso!', 'success');
+        carregarHorarios();
+      } else {
+        mostrarAlerta('Erro ao salvar horários.', 'error');
+      }
+    } catch { mostrarAlerta('Erro ao conectar com o servidor.', 'error'); }
+  }
 
   // ── WhatsApp ──────────────────────────────────────────────
   let waPollingInterval = null;
