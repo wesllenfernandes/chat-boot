@@ -1,7 +1,7 @@
 const { Pedido, ItemPedido, Cliente } = require('../models');
 
 class PedidoService {
-  static async criarPedido(clienteId, total, formaPagamento, endereco, itens, agendado = false, dataAgendamento = null) {
+  static async criarPedido(clienteId, total, formaPagamento, endereco, itens, agendado = false, dataAgendamento = null, nomeDestinatario = null) {
     const transaction = await Pedido.sequelize.transaction();
 
     try {
@@ -10,6 +10,7 @@ class PedidoService {
         total,
         forma_pagamento: formaPagamento,
         endereco,
+        nome_destinatario: nomeDestinatario,
         status: 'confirmado',
         agendado,
         data_agendamento: dataAgendamento
@@ -64,19 +65,20 @@ class PedidoService {
     );
   }
 
-  static formatarResumoPedido(itens, total, formaPagamento, endereco) {
+  static formatarResumoPedido(itens, total, formaPagamento, endereco, nomeDestinatario = null) {
     let mensagem = '📋 *RESUMO DO PEDIDO*\n\n';
-    
+
     itens.forEach((item, index) => {
       const subtotal = item.quantidade * item.preco;
       mensagem += `${index + 1}. ${item.produto} x${item.quantidade} - R$ ${subtotal.toFixed(2)}\n`;
     });
-    
+
     mensagem += `\n💰 *Total: R$ ${total.toFixed(2)}*`;
     mensagem += `\n💳 Forma de Pagamento: ${formaPagamento}`;
+    if (nomeDestinatario) mensagem += `\n👤 Nome: ${nomeDestinatario}`;
     mensagem += `\n📍 Endereço: ${endereco}`;
     mensagem += '\n\nConfirma o pedido? (sim/não)';
-    
+
     return mensagem;
   }
 

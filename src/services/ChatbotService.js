@@ -45,7 +45,10 @@ class ChatbotService {
         
       case 'PAGAMENTO':
         return await this.processarPagamento(telefone, msg, cliente, mensagem);
-        
+
+      case 'NOME':
+        return await this.processarNome(telefone, msg, cliente, mensagem);
+
       case 'ENDERECO':
         return await this.processarEndereco(telefone, msg, cliente, mensagem);
         
@@ -413,35 +416,32 @@ Quantas unidades você gostaria de levar?`,
     }
 
     await ClienteService.atualizarProdutoSelecionado(telefone, { ...cliente.produto_selecionado, formaPagamento });
-    await ClienteService.atualizarEtapa(telefone, 'ENDERECO');
+    await ClienteService.atualizarEtapa(telefone, 'NOME');
 
     return {
-      resposta: `✅ ${formaPagamento}! Perfeito.\n\nAgora, por favor, digite seu endereço completo para entrega:` + RODAPE_CANCELAR,
-      proximaEtapa: 'ENDERECO'
+      resposta: `✅ ${formaPagamento}! Perfeito.\n\nQual é o seu nome ou de quem vai receber o pedido?` + RODAPE_CANCELAR,
+      proximaEtapa: 'NOME'
     };
+  }
 
-    // Mapeamento de opções para formas de pagamento
-    const formasPagamentoIgnoradas = {
-      1: 'Dinheiro',
-      2: 'Pix',
-      3: 'Cartão'
-    };
+  static async processarNome(telefone, msg, cliente, mensagem) {
+    const nome = mensagem.trim();
 
-    void formasPagamentoIgnoradas;
-
-    if (!formaPagamento) {
+    if (nome.length < 2) {
       return {
-        resposta: 'Opção inválida. 😕\n\nPor favor, escolha uma das opções:\n\n1 - Dinheiro\n2 - Pix\n3 - Cartão',
-        proximaEtapa: 'PAGAMENTO'
+        resposta: 'Por favor, digite um nome válido para identificar o pedido.' + RODAPE_CANCELAR,
+        proximaEtapa: 'NOME'
       };
     }
 
-    // Salvar forma de pagamento no cliente (usando produto_selecionado temporariamente)
-    await ClienteService.atualizarProdutoSelecionado(telefone, { ...cliente.produto_selecionado, formaPagamento });
+    await ClienteService.atualizarProdutoSelecionado(telefone, {
+      ...cliente.produto_selecionado,
+      nomeDestinatario: nome
+    });
     await ClienteService.atualizarEtapa(telefone, 'ENDERECO');
 
     return {
-      resposta: `✅ ${formaPagamento}! Perfeito. 📍\n\nAgora, por favor, digite seu endereço completo para entrega:`,
+      resposta: `👤 Olá, *${nome}*! 📍\n\nAgora, por favor, digite seu endereço completo para entrega (rua, número, bairro):` + RODAPE_CANCELAR,
       proximaEtapa: 'ENDERECO'
     };
   }
@@ -467,8 +467,9 @@ Quantas unidades você gostaria de levar?`,
     const itens = cliente.itens_pedido;
     const total = PedidoService.calcularTotal(itens);
     const formaPagamento = cliente.produto_selecionado.formaPagamento;
+    const nomeDestinatario = cliente.produto_selecionado.nomeDestinatario || null;
 
-    const resumo = PedidoService.formatarResumoPedido(itens, total, formaPagamento, endereco);
+    const resumo = PedidoService.formatarResumoPedido(itens, total, formaPagamento, endereco, nomeDestinatario);
 
     return {
       resposta: resumo + '\n\nEstá tudo correto? Digite "sim" para confirmar ou "não" para cancelar.',
@@ -494,6 +495,7 @@ Quantas unidades você gostaria de levar?`,
         const total = PedidoService.calcularTotal(itens);
         const formaPagamento = cliente.produto_selecionado.formaPagamento;
         const endereco = cliente.produto_selecionado.endereco;
+        const nomeDestinatario = cliente.produto_selecionado.nomeDestinatario || null;
 
         const aberto = await HorarioService.isAberto();
         const agendado = !aberto;
@@ -509,14 +511,15 @@ Quantas unidades você gostaria de levar?`,
         }
 
         const pedido = await PedidoService.criarPedido(
-          cliente.id, total, formaPagamento, endereco, itens, agendado, dataAgendamento
+          cliente.id, total, formaPagamento, endereco, itens, agendado, dataAgendamento, nomeDestinatario
         );
 
         await ClienteService.limparPedido(telefone);
 
+        const nomeLabel = nomeDestinatario ? `\n👤 Nome: ${nomeDestinatario}` : '';
         const respostaFinal = agendado
-          ? `🗓️ *PEDIDO AGENDADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}\n📍 Endereço: ${endereco}\n\n⏰ *Entrega prevista: ${entregaFormatada}*\n\nSeu pedido será preparado assim que abrirmos! 🍕`
-          : `🎉 *PEDIDO CONFIRMADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}\n📍 Endereço: ${endereco}\n\n⏱️ Tempo estimado de entrega: 40-50 minutos\n\nObrigado pela preferência! 🍕`;
+          ? `🗓️ *PEDIDO AGENDADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}${nomeLabel}\n📍 Endereço: ${endereco}\n\n⏰ *Entrega prevista: ${entregaFormatada}*\n\nSeu pedido será preparado assim que abrirmos! 🍕`
+          : `🎉 *PEDIDO CONFIRMADO!*\n\n🆔 Número do Pedido: #${pedido.id}\n💰 Total: R$ ${total.toFixed(2)}\n💳 Pagamento: ${formaPagamento}${nomeLabel}\n📍 Endereço: ${endereco}\n\n⏱️ Tempo estimado de entrega: 40-50 minutos\n\nObrigado pela preferência! 🍕`;
 
         return { resposta: respostaFinal, proximaEtapa: 'MENU' };
       } catch (error) {

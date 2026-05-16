@@ -27,6 +27,10 @@ const Pedido = sequelize.define('Pedido', {
     type: DataTypes.TEXT,
     allowNull: false
   },
+  nome_destinatario: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
   status: {
     type: DataTypes.ENUM('pendente', 'confirmado', 'em_preparo', 'enviado', 'entregue', 'cancelado'),
     allowNull: false,
