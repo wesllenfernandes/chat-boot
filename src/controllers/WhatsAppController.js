@@ -81,6 +81,11 @@ class WhatsAppController {
     const messageId = message.id.id;
     const telefone = message.from;
     let texto = message.body;
+
+    if (this.shouldIgnoreMessage(message)) {
+      console.log(`Ignorando mensagem de chat nao suportado: ${telefone}`);
+      return;
+    }
     
     // Verificar se a mensagem já foi processada
     if (this.processedMessages.has(messageId)) {
@@ -98,7 +103,7 @@ class WhatsAppController {
     }
     
     // Ignorar mensagens de grupos
-    if (message.from.includes('@g.us')) {
+    if (this.isUnsupportedChatId(message.from)) {
       return;
     }
     
@@ -161,7 +166,14 @@ class WhatsAppController {
   
   async sendMessage(telefone, mensagem) {
     try {
-      await this.client.sendMessage(telefone + '@c.us', mensagem);
+      const chatId = this.formatChatId(telefone);
+
+      if (this.isUnsupportedChatId(chatId)) {
+        console.log(`Ignorando envio para chat nao suportado: ${chatId}`);
+        return false;
+      }
+
+      await this.client.sendMessage(chatId, mensagem);
       console.log(`✅ Mensagem enviada para ${telefone}`);
     } catch (error) {
       console.error(`❌ Erro ao enviar mensagem para ${telefone}:`, error);
@@ -169,6 +181,30 @@ class WhatsAppController {
     }
   }
   
+  formatChatId(telefone) {
+    if (!telefone) {
+      throw new Error('Telefone/chatId vazio');
+    }
+
+    if (telefone.includes('@')) {
+      return telefone;
+    }
+
+    const apenasNumeros = telefone.replace(/\D/g, '');
+    return `${apenasNumeros}@c.us`;
+  }
+
+  isUnsupportedChatId(chatId) {
+    return chatId.includes('@g.us') ||
+      chatId.includes('@newsletter') ||
+      chatId === 'status@broadcast' ||
+      chatId.includes('@broadcast');
+  }
+
+  shouldIgnoreMessage(message) {
+    return message.fromMe || this.isUnsupportedChatId(message.from);
+  }
+
   getStatus() {
     return this.client.info;
   }

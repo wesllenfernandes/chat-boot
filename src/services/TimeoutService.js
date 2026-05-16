@@ -22,6 +22,7 @@ class TimeoutService {
       const clientes = await Cliente.findAll();
 
       for (const cliente of clientes) {
+        if (this.isChatIgnorado(cliente.telefone)) continue;
         if (!cliente.ultima_interacao) continue;
 
         const ultimaInteracao = new Date(cliente.ultima_interacao);
@@ -88,6 +89,14 @@ class TimeoutService {
       clearInterval(this.checkInterval);
       console.log('⏰ Sistema de timeout parado');
     }
+  }
+
+  isChatIgnorado(telefone) {
+    return !telefone ||
+      telefone.includes('@g.us') ||
+      telefone.includes('@newsletter') ||
+      telefone === 'status@broadcast' ||
+      telefone.includes('@broadcast');
   }
 }
 
