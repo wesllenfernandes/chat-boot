@@ -1,4 +1,4 @@
-const { formatarCardapio, buscarProduto } = require('../config/cardapio');
+const { cardapio, formatarCardapio, buscarProduto } = require('../config/cardapio');
 const ClienteService = require('./ClienteService');
 const PedidoService = require('./PedidoService');
 const AIService = require('./AIService');
@@ -74,6 +74,21 @@ class ChatbotService {
     const clienteAtualizado = await ClienteService.buscarOuCriar(telefone);
     const itens = clienteAtualizado.itens_pedido;
 
+    if (itens.length > 0 && indicadoresFinalizar.some(indicador => msg.includes(indicador))) {
+      console.log('Cliente quer finalizar pedido');
+      return await this.finalizarPedido(telefone);
+    }
+
+    const produtoSelecionadoPorNumero = this.obterProdutoPorNumero(msg);
+    if (produtoSelecionadoPorNumero) {
+      return await this.selecionarProduto(telefone, produtoSelecionadoPorNumero);
+    }
+
+    const produtosDetectados = this.extrairProdutosDaMensagem(mensagem);
+    if (produtosDetectados.length > 0) {
+      return await this.adicionarProdutosAoPedido(telefone, produtosDetectados);
+    }
+
     // Se há itens no carrinho, verificar se o cliente quer adicionar mais ou finalizar
     if (itens.length > 0) {
       // Verificar se o cliente quer finalizar em linguagem natural
@@ -103,7 +118,8 @@ class ChatbotService {
           return await this.finalizarPedido(telefone);
         }
 
-        if (interpretacao.ePedido && interpretacao.produtos.length > 0) {
+        if (interpretacao.produtos.length > 0) {
+          return await this.adicionarProdutosAoPedido(telefone, interpretacao.produtos);
           console.log('✅ IA detectou pedido em linguagem natural');
           // Processar os produtos
           let primeiroItem = true;
@@ -412,6 +428,192 @@ Quantas unidades você gostaria de levar?`,
     }
   }
   
+  static obterProdutoPorNumero(msg) {
+    if (!/^\d+$/.test(msg)) {
+      return null;
+    }
+
+    return buscarProduto(parseInt(msg));
+  }
+
+  static async selecionarProduto(telefone, produto) {
+    await ClienteService.atualizarProdutoSelecionado(telefone, produto);
+    await ClienteService.atualizarEtapa(telefone, 'QUANTIDADE');
+
+    return {
+      resposta: `Perfeito! ðŸ• VocÃª escolheu: *${produto.nome}* por R$ ${produto.preco.toFixed(2)}
+
+Quantas unidades vocÃª gostaria de levar?`,
+      proximaEtapa: 'QUANTIDADE'
+    };
+  }
+
+  static async adicionarProdutosAoPedido(telefone, produtos) {
+    let adicionouItem = false;
+
+    for (const produto of produtos) {
+      const produtoDoCardapio = this.resolverProdutoDoCardapio(produto);
+
+      if (!produtoDoCardapio) {
+        continue;
+      }
+
+      await ClienteService.adicionarItemAoPedido(telefone, {
+        produto: produtoDoCardapio.nome,
+        quantidade: this.normalizarQuantidade(produto.quantidade),
+        preco: produtoDoCardapio.preco
+      });
+      adicionouItem = true;
+    }
+
+    if (!adicionouItem) {
+      return {
+        resposta: 'NÃ£o consegui identificar esse item no cardÃ¡pio. Digite o nÃºmero do produto ou escreva o nome, como "refrigerante" ou "pizza calabresa".',
+        proximaEtapa: 'MENU'
+      };
+    }
+
+    await ClienteService.atualizarEtapa(telefone, 'MENU');
+    const clienteAtualizado = await ClienteService.buscarOuCriar(telefone);
+    return this.montarRespostaPedidoAtual(clienteAtualizado.itens_pedido);
+  }
+
+  static montarRespostaPedidoAtual(itens) {
+    let resposta = 'Excelente escolha! âœ…\n\n';
+    itens.forEach(item => {
+      resposta += `${item.quantidade}x ${item.produto}\n`;
+    });
+    resposta += '\nGostaria de adicionar mais itens ao pedido ou deseja finalizar?';
+
+    return {
+      resposta,
+      proximaEtapa: 'MENU'
+    };
+  }
+
+  static extrairProdutosDaMensagem(mensagem) {
+    const texto = this.normalizarTexto(mensagem);
+    const produtos = [];
+
+    for (const item of cardapio) {
+      const aliases = this.obterAliasesProduto(item);
+
+      if (aliases.some(alias => this.contemTermo(texto, alias))) {
+        produtos.push({
+          id: item.id,
+          nome: item.nome,
+          quantidade: this.extrairQuantidade(texto, aliases)
+        });
+      }
+    }
+
+    return produtos;
+  }
+
+  static resolverProdutoDoCardapio(produto) {
+    const porNome = produto.nome ? this.buscarProdutoPorTexto(produto.nome) : null;
+    if (porNome) {
+      return porNome;
+    }
+
+    return buscarProduto(produto.id);
+  }
+
+  static buscarProdutoPorTexto(textoProduto) {
+    const texto = this.normalizarTexto(textoProduto);
+
+    return cardapio.find(item => {
+      const aliases = this.obterAliasesProduto(item);
+      return aliases.some(alias => this.contemTermo(texto, alias));
+    });
+  }
+
+  static obterAliasesProduto(produto) {
+    const nome = this.normalizarTexto(produto.nome);
+    const aliasesPorId = {
+      1: ['pizza calabresa', 'calabresa'],
+      2: ['pizza frango', 'frango'],
+      3: ['pizza margherita', 'margherita', 'marguerita'],
+      4: ['pizza portuguesa', 'portuguesa'],
+      5: ['pizza quatro queijos', 'quatro queijos', '4 queijos'],
+      6: ['pizza pepperoni', 'pepperoni'],
+      7: ['refrigerante', 'refri', 'refrigerantes', 'refresco', 'coca', 'coca cola', 'guarana', 'guarana antartica', 'fanta', 'sprite'],
+      8: ['suco natural', 'suco'],
+      9: ['agua mineral', 'agua'],
+      10: ['batata frita', 'batata', 'fritas']
+    };
+
+    return [nome, ...(aliasesPorId[produto.id] || [])].map(alias => this.normalizarTexto(alias));
+  }
+
+  static contemTermo(texto, termo) {
+    return new RegExp(`(^|\\s)${this.escaparRegex(termo)}(\\s|$)`).test(texto);
+  }
+
+  static extrairQuantidade(texto, aliases) {
+    for (const alias of aliases) {
+      const aliasRegex = this.escaparRegex(alias);
+      const antesDoProduto = texto.match(new RegExp(`(?:^|\\s)(\\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\\s+${aliasRegex}(?:\\s|$)`));
+      if (antesDoProduto) {
+        return this.normalizarQuantidade(antesDoProduto[1]);
+      }
+
+      const depoisDoProduto = texto.match(new RegExp(`${aliasRegex}\\s+(\\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)(?:\\s|$)`));
+      if (depoisDoProduto) {
+        return this.normalizarQuantidade(depoisDoProduto[1]);
+      }
+    }
+
+    return 1;
+  }
+
+  static normalizarQuantidade(quantidade) {
+    if (!quantidade) {
+      return 1;
+    }
+
+    if (typeof quantidade === 'number') {
+      return quantidade > 0 ? quantidade : 1;
+    }
+
+    const texto = this.normalizarTexto(String(quantidade));
+    const numerosPorExtenso = {
+      um: 1,
+      uma: 1,
+      dois: 2,
+      duas: 2,
+      tres: 3,
+      quatro: 4,
+      cinco: 5,
+      seis: 6,
+      sete: 7,
+      oito: 8,
+      nove: 9,
+      dez: 10
+    };
+
+    if (numerosPorExtenso[texto]) {
+      return numerosPorExtenso[texto];
+    }
+
+    const numero = parseInt(texto);
+    return !isNaN(numero) && numero > 0 ? numero : 1;
+  }
+
+  static normalizarTexto(texto) {
+    return String(texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  static escaparRegex(texto) {
+    return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   static async finalizarPedido(telefone) {
     const cliente = await ClienteService.buscarOuCriar(telefone);
     const itens = cliente.itens_pedido;

@@ -1,4 +1,5 @@
 const { Cliente } = require('../models');
+const { Op } = require('sequelize');
 
 class TimeoutService {
   constructor() {
@@ -8,6 +9,10 @@ class TimeoutService {
   }
 
   iniciarVerificacao(whatsappController) {
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+    }
+
     // Verificar a cada 30 segundos
     this.checkInterval = setInterval(async () => {
       await this.verificarTimeouts(whatsappController);
@@ -24,6 +29,14 @@ class TimeoutService {
       for (const cliente of clientes) {
         if (this.isChatIgnorado(cliente.telefone)) continue;
         if (!cliente.ultima_interacao) continue;
+
+        if (!this.temAtendimentoAtivo(cliente)) {
+          await cliente.update({
+            ultima_interacao: null,
+            aviso_timeout_enviado: false
+          });
+          continue;
+        }
 
         const ultimaInteracao = new Date(cliente.ultima_interacao);
         const tempoDecorrido = agora - ultimaInteracao;
@@ -50,10 +63,10 @@ class TimeoutService {
                       '📝 Para continuar, basta enviar qualquer mensagem.\n\n' +
                       'Se quiser reiniciar, digite "menu"';
 
+      const marcouAviso = await this.marcarAvisoTimeout(cliente);
+      if (!marcouAviso) return;
+
       await whatsappController.sendMessage(cliente.telefone, mensagem);
-      
-      // Marcar que o aviso foi enviado
-      await cliente.update({ aviso_timeout_enviado: true });
       
       console.log(`⏰ Aviso de timeout enviado para ${cliente.telefone}`);
     } catch (error) {
@@ -68,15 +81,10 @@ class TimeoutService {
                       '🍕 Se quiser fazer um novo pedido, envie qualquer mensagem.\n\n' +
                       'Estamos aguardando seu retorno!';
 
+      const marcouEncerrado = await this.marcarAtendimentoEncerrado(cliente);
+      if (!marcouEncerrado) return;
+
       await whatsappController.sendMessage(cliente.telefone, mensagem);
-      
-      // Limpar dados do cliente
-      await cliente.update({
-        itens_pedido: [],
-        produto_selecionado: null,
-        etapa_atual: 'MENU',
-        aviso_timeout_enviado: false
-      });
       
       console.log(`⏰ Atendimento encerrado para ${cliente.telefone}`);
     } catch (error) {
@@ -97,6 +105,46 @@ class TimeoutService {
       telefone.includes('@newsletter') ||
       telefone === 'status@broadcast' ||
       telefone.includes('@broadcast');
+  }
+
+  temAtendimentoAtivo(cliente) {
+    const itens = Array.isArray(cliente.itens_pedido) ? cliente.itens_pedido : [];
+    return cliente.etapa_atual !== 'MENU' || itens.length > 0 || !!cliente.produto_selecionado;
+  }
+
+  async marcarAvisoTimeout(cliente) {
+    const [linhasAtualizadas] = await Cliente.update(
+      { aviso_timeout_enviado: true },
+      {
+        where: {
+          id: cliente.id,
+          aviso_timeout_enviado: false,
+          ultima_interacao: { [Op.ne]: null }
+        }
+      }
+    );
+
+    return linhasAtualizadas > 0;
+  }
+
+  async marcarAtendimentoEncerrado(cliente) {
+    const [linhasAtualizadas] = await Cliente.update(
+      {
+        itens_pedido: [],
+        produto_selecionado: null,
+        etapa_atual: 'MENU',
+        ultima_interacao: null,
+        aviso_timeout_enviado: false
+      },
+      {
+        where: {
+          id: cliente.id,
+          ultima_interacao: { [Op.ne]: null }
+        }
+      }
+    );
+
+    return linhasAtualizadas > 0;
   }
 }
 
