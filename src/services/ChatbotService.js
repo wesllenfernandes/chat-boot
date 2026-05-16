@@ -96,12 +96,19 @@ class ChatbotService {
     // Se há itens no carrinho, verificar se o cliente quer adicionar mais ou finalizar
     if (itens.length > 0) {
       // Verificar se o cliente quer finalizar em linguagem natural
-      if (indicadoresFinalizar.some(indicador => msg.includes(indicador))) {
+      if (this.isRespostaNegativa(msg) || indicadoresFinalizar.some(indicador => msg.includes(indicador))) {
         console.log('🔄 Cliente quer finalizar pedido (linguagem natural)');
         return await this.finalizarPedido(telefone);
       }
 
       // Verificar se o cliente quer ver o cardápio (adicionar mais)
+      if (this.isRespostaAfirmativa(msg)) {
+        return {
+          resposta: formatarCardapio(),
+          proximaEtapa: 'MENU'
+        };
+      }
+
       if (comandosCardapio.some(cmd => msg === cmd || msg.includes(cmd))) {
         console.log('📋 Cliente quer ver cardápio');
         return {
@@ -188,6 +195,13 @@ class ChatbotService {
     }
 
     // Se for um número válido do cardápio (mantido para facilitar)
+    if (this.isSaudacao(msg)) {
+      return {
+        resposta: this.responderSaudacao(msg),
+        proximaEtapa: 'MENU'
+      };
+    }
+
     const produtoId = parseInt(msg);
     const produto = buscarProduto(produtoId);
 
@@ -336,16 +350,31 @@ Quantas unidades você gostaria de levar?`,
   }
   
   static async processarPagamento(telefone, msg, cliente, mensagem) {
-    const opcao = parseInt(msg);
+    const formaPagamento = this.resolverFormaPagamento(msg);
+
+    if (!formaPagamento) {
+      return {
+        resposta: 'Não consegui identificar a forma de pagamento.\n\nEscolha uma opção:\n\n1 - Dinheiro\n2 - Pix\n3 - Cartão',
+        proximaEtapa: 'PAGAMENTO'
+      };
+    }
+
+    await ClienteService.atualizarProdutoSelecionado(telefone, { ...cliente.produto_selecionado, formaPagamento });
+    await ClienteService.atualizarEtapa(telefone, 'ENDERECO');
+
+    return {
+      resposta: `✅ ${formaPagamento}! Perfeito.\n\nAgora, por favor, digite seu endereço completo para entrega:`,
+      proximaEtapa: 'ENDERECO'
+    };
 
     // Mapeamento de opções para formas de pagamento
-    const formasPagamento = {
+    const formasPagamentoIgnoradas = {
       1: 'Dinheiro',
       2: 'Pix',
       3: 'Cartão'
     };
 
-    const formaPagamento = formasPagamento[opcao];
+    void formasPagamentoIgnoradas;
 
     if (!formaPagamento) {
       return {
@@ -395,9 +424,18 @@ Quantas unidades você gostaria de levar?`,
   }
   
   static async processarConfirmacao(telefone, msg, cliente, mensagem) {
-    const resposta = msg.toLowerCase();
+    const resposta = this.normalizarTexto(msg);
 
-    if (resposta === 'sim' || resposta === 's' || resposta === 'confirmar' || resposta === 'ok') {
+    if (this.isRespostaNegativa(resposta) || resposta === 'cancelar') {
+      await ClienteService.limparPedido(telefone);
+
+      return {
+        resposta: 'Pedido cancelado. 😊\n\nSe quiser fazer um novo pedido, é só me avisar!',
+        proximaEtapa: 'MENU'
+      };
+    }
+
+    if (this.isRespostaAfirmativa(resposta)) {
       try {
         // Recuperar dados do pedido
         const itens = cliente.itens_pedido;
@@ -452,7 +490,101 @@ Quantas unidades você gostaria de levar?`,
       tiposGenericos.some(tipo => this.contemTermo(texto, tipo));
   }
 
+  static isRespostaAfirmativa(mensagem) {
+    const texto = this.normalizarTexto(mensagem);
+    return texto === 's' ||
+      texto === 'ss' ||
+      texto === 'sim' ||
+      texto.startsWith('sim ') ||
+      texto === 'ok' ||
+      texto === 'okay' ||
+      texto === 'confirmar' ||
+      texto === 'confirmo' ||
+      texto === 'certo' ||
+      texto === 'isso' ||
+      texto === 'claro' ||
+      texto === 'pode' ||
+      texto.includes('ta certo') ||
+      texto.includes('esta certo');
+  }
+
+  static isRespostaNegativa(mensagem) {
+    const texto = this.normalizarTexto(mensagem);
+    return texto === 'n' ||
+      texto === 'nao' ||
+      texto === 'n o' ||
+      texto.startsWith('nao ') ||
+      texto.startsWith('n o ') ||
+      texto === 'negativo' ||
+      texto.includes('nao quero') ||
+      texto.includes('n o quero') ||
+      texto.includes('nao quiser') ||
+      texto.includes('quero cancelar') ||
+      texto.includes('cancelar pedido');
+  }
+
+  static resolverFormaPagamento(mensagem) {
+    const texto = this.normalizarTexto(mensagem);
+
+    if (texto === '1' || texto.includes('dinheiro') || texto.includes('especie')) {
+      return 'Dinheiro';
+    }
+
+    if (texto === '2' || texto.includes('pix')) {
+      return 'Pix';
+    }
+
+    if (texto === '3' ||
+      texto.includes('cartao') ||
+      texto.includes('cart o') ||
+      texto.includes('credito') ||
+      texto.includes('debito')) {
+      return 'Cartão';
+    }
+
+    return null;
+  }
+
+  static isSaudacao(mensagem) {
+    const texto = this.normalizarTexto(mensagem);
+    return [
+      'oi',
+      'ola',
+      'oie',
+      'bom dia',
+      'boa tarde',
+      'boa noite',
+      'eai',
+      'eae',
+      'opa',
+      'salve'
+    ].includes(texto);
+  }
+
+  static responderSaudacao(mensagem) {
+    const texto = this.normalizarTexto(mensagem);
+
+    if (texto === 'bom dia') {
+      return 'Bom dia! Bem-vindo à Pizzaria Otaliva. Como posso ajudar?';
+    }
+
+    if (texto === 'boa tarde') {
+      return 'Boa tarde! Bem-vindo à Pizzaria Otaliva. Como posso ajudar?';
+    }
+
+    if (texto === 'boa noite') {
+      return 'Boa noite! Bem-vindo à Pizzaria Otaliva. Como posso ajudar?';
+    }
+
+    return 'Olá! Bem-vindo à Pizzaria Otaliva. Como posso ajudar?';
+  }
+
   static responderPedidoGenerico() {
+    return {
+      resposta: 'Claro! Qual item você gostaria?\n\n' + formatarCardapio(),
+      proximaEtapa: 'MENU'
+    };
+
     return {
       resposta: 'Claro! Qual item vocÃª gostaria?\n\n' + formatarCardapio(),
       proximaEtapa: 'MENU'
@@ -486,6 +618,13 @@ Quantas unidades você gostaria de levar?`,
     await ClienteService.atualizarEtapa(telefone, 'QUANTIDADE');
 
     return {
+      resposta: `Perfeito! 🍕 Você escolheu: *${produto.nome}* por R$ ${produto.preco.toFixed(2)}
+
+Quantas unidades você gostaria de levar?`,
+      proximaEtapa: 'QUANTIDADE'
+    };
+
+    return {
       resposta: `Perfeito! ðŸ• VocÃª escolheu: *${produto.nome}* por R$ ${produto.preco.toFixed(2)}
 
 Quantas unidades vocÃª gostaria de levar?`,
@@ -513,6 +652,11 @@ Quantas unidades vocÃª gostaria de levar?`,
 
     if (!adicionouItem) {
       return {
+        resposta: 'Não consegui identificar esse item no cardápio. Digite o número do produto ou escreva o nome, como "refrigerante" ou "pizza calabresa".',
+        proximaEtapa: 'MENU'
+      };
+
+      return {
         resposta: 'NÃ£o consegui identificar esse item no cardÃ¡pio. Digite o nÃºmero do produto ou escreva o nome, como "refrigerante" ou "pizza calabresa".',
         proximaEtapa: 'MENU'
       };
@@ -524,6 +668,16 @@ Quantas unidades vocÃª gostaria de levar?`,
   }
 
   static montarRespostaPedidoAtual(itens) {
+    let respostaLimpa = 'Excelente escolha! ✅\n\n';
+    itens.forEach(item => {
+      respostaLimpa += `${item.quantidade}x ${item.produto}\n`;
+    });
+    respostaLimpa += '\nGostaria de adicionar mais itens ao pedido ou deseja finalizar?';
+
+    return {
+      resposta: respostaLimpa,
+      proximaEtapa: 'MENU'
+    };
     let resposta = 'Excelente escolha! âœ…\n\n';
     itens.forEach(item => {
       resposta += `${item.quantidade}x ${item.produto}\n`;
