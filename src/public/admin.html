@@ -37,30 +37,64 @@
     header { background: #e8490f; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     header h1 { font-size: 1.2rem; }
 
+    /* TAB NAV */
+    .tab-nav { background: white; border-bottom: 2px solid #e5e7eb; display: flex; padding: 0 1.5rem; overflow-x: auto; }
+    .tab-btn { background: none; border: none; padding: 0.9rem 1.4rem; font-size: 0.9rem; font-weight: 600; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+    .tab-btn:hover { color: #e8490f; }
+    .tab-btn.active { color: #e8490f; border-bottom-color: #e8490f; }
+
     /* MAIN */
-    main { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+    main { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
 
     /* CARD */
     .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 1.5rem; }
 
+    /* STATS GRID */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: white; border-radius: 12px; padding: 1.2rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .stat-label { font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .stat-value { font-size: 1.9rem; font-weight: 800; color: #111; }
+    .stat-sub { font-size: 0.78rem; color: #9ca3af; margin-top: 0.2rem; }
+    .stat-primary .stat-value { color: #e8490f; }
+    .stat-green .stat-value { color: #16a34a; }
+    .stat-yellow .stat-value { color: #d97706; }
+
     /* TOOLBAR */
-    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.7rem; }
     .toolbar h2 { font-size: 1.1rem; }
+    .toolbar-right { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+
+    /* FILTER ROW */
+    .filter-row { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .filter-row select { width: auto; padding: 0.45rem 0.75rem; font-size: 0.85rem; }
+    .filter-label { font-size: 0.85rem; color: #6b7280; font-weight: 600; }
 
     /* TABLE */
     .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 680px; }
-    th { background: #f9fafb; padding: 0.7rem 1rem; text-align: left; font-size: 0.8rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #e5e7eb; }
-    td { padding: 0.85rem 1rem; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; vertical-align: middle; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; padding: 0.7rem 0.9rem; text-align: left; font-size: 0.78rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #e5e7eb; white-space: nowrap; }
+    td { padding: 0.8rem 0.9rem; border-bottom: 1px solid #f3f4f6; font-size: 0.88rem; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafafa; }
     .desc-cell { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6b7280; font-size: 0.82rem; }
+    .itens-cell { font-size: 0.82rem; color: #374151; line-height: 1.6; min-width: 140px; max-width: 200px; }
+    .end-cell { font-size: 0.82rem; color: #374151; min-width: 150px; max-width: 200px; word-break: break-word; }
 
     /* BADGES */
     .badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
-    .badge-ativo { background: #dcfce7; color: #15803d; }
-    .badge-inativo { background: #fee2e2; color: #b91c1c; }
-    .badge-tipo { background: #f3f4f6; color: #374151; }
+    .badge-ativo    { background: #dcfce7; color: #15803d; }
+    .badge-inativo  { background: #fee2e2; color: #b91c1c; }
+    .badge-tipo     { background: #f3f4f6; color: #374151; }
+    .badge-pendente  { background: #fef3c7; color: #92400e; }
+    .badge-confirmado{ background: #dbeafe; color: #1e40af; }
+    .badge-em_preparo{ background: #fed7aa; color: #9a3412; }
+    .badge-enviado   { background: #e9d5ff; color: #6b21a8; }
+    .badge-entregue  { background: #dcfce7; color: #15803d; }
+    .badge-cancelado { background: #fee2e2; color: #b91c1c; }
+    .badge-agendado  { background: #e0f2fe; color: #0369a1; font-size: 0.7rem; }
+
+    /* STATUS SELECT */
+    .select-status { width: auto; padding: 0.3rem 0.5rem; font-size: 0.8rem; border-radius: 6px; min-width: 130px; }
 
     /* MODAL */
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; justify-content: center; align-items: center; }
@@ -82,13 +116,17 @@
     /* ACTIONS */
     .actions { display: flex; gap: 0.4rem; }
 
+    /* AUTO REFRESH */
+    .check-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.83rem; color: #6b7280; cursor: pointer; }
+    .check-label input { width: auto; }
+
     /* WHATSAPP */
     .wa-section { display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap; }
     .wa-info { flex: 1; min-width: 200px; }
     .wa-status { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
     .wa-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .dot-connected { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-    .dot-waiting { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; animation: pulse 1.2s infinite; }
+    .dot-connected    { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .dot-waiting      { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; animation: pulse 1.2s infinite; }
     .dot-disconnected { background: #ef4444; }
     .dot-initializing { background: #6b7280; animation: pulse 1.2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -103,11 +141,11 @@
 </head>
 <body>
 
-<!-- TELA DE LOGIN -->
+<!-- LOGIN -->
 <div id="loginScreen" class="login-wrap">
   <div class="login-card">
     <h1>🍕 Admin Pizzaria</h1>
-    <p>Painel de gerenciamento do cardápio</p>
+    <p>Painel de gerenciamento</p>
     <div id="loginErro" class="alert alert-error hidden"></div>
     <div class="form-group">
       <input type="password" id="senhaInput" placeholder="Senha de acesso" onkeypress="if(event.key==='Enter')login()">
@@ -116,90 +154,182 @@
   </div>
 </div>
 
-<!-- PAINEL PRINCIPAL -->
+<!-- PAINEL -->
 <div id="painel" class="hidden">
   <header>
     <h1>🍕 Admin — Pizzaria Otaliva</h1>
     <button class="btn btn-secondary btn-sm" onclick="sair()">Sair</button>
   </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="mostrarTab('pedidos', this)">📋 Pedidos</button>
+    <button class="tab-btn" onclick="mostrarTab('horarios', this)">🕐 Horários</button>
+    <button class="tab-btn" onclick="mostrarTab('whatsapp', this)">📱 WhatsApp</button>
+    <button class="tab-btn" onclick="mostrarTab('cardapio', this)">🍕 Cardápio</button>
+  </nav>
+
   <main>
     <div id="alerta" class="alert hidden"></div>
 
-    <!-- HORÁRIOS -->
-    <div class="card">
-      <div class="toolbar">
-        <h2>🕐 Horários de Funcionamento</h2>
-        <button class="btn btn-primary" onclick="salvarHorarios()">Salvar Horários</button>
+    <!-- TAB PEDIDOS -->
+    <div id="tab-pedidos" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card stat-primary">
+          <div class="stat-label">Pedidos Hoje</div>
+          <div class="stat-value" id="statHoje">—</div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-label">Receita Hoje</div>
+          <div class="stat-value" id="statReceitaHoje">—</div>
+        </div>
+        <div class="stat-card stat-yellow">
+          <div class="stat-label">Em Andamento</div>
+          <div class="stat-value" id="statAndamento">—</div>
+          <div class="stat-sub">pendente + em preparo</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total de Pedidos</div>
+          <div class="stat-value" id="statTotal">—</div>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table id="tabelaHorarios">
-          <thead>
-            <tr>
-              <th>Dia</th>
-              <th>Aberto</th>
-              <th>Abertura</th>
-              <th>Fechamento</th>
-            </tr>
-          </thead>
-          <tbody id="corpoHorarios">
-            <tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:2rem">Carregando...</td></tr>
-          </tbody>
-        </table>
+
+      <div class="card">
+        <div class="toolbar">
+          <h2>📋 Pedidos</h2>
+          <div class="toolbar-right">
+            <label class="check-label">
+              <input type="checkbox" id="chkAutoRefresh" onchange="toggleAutoRefresh()"> Auto-atualizar (30s)
+            </label>
+            <button class="btn btn-secondary btn-sm" onclick="carregarPedidos()">🔄 Atualizar</button>
+            <button class="btn btn-success btn-sm" onclick="exportarCSV()">📥 Exportar CSV</button>
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <span class="filter-label">Filtrar:</span>
+          <select id="filtroStatus" onchange="filtrarPedidos()">
+            <option value="">Todos os status</option>
+            <option value="pendente">⏳ Pendente</option>
+            <option value="confirmado">✅ Confirmado</option>
+            <option value="em_preparo">👨‍🍳 Em Preparo</option>
+            <option value="enviado">🛵 Enviado</option>
+            <option value="entregue">📦 Entregue</option>
+            <option value="cancelado">❌ Cancelado</option>
+          </select>
+          <select id="filtroPeriodo" onchange="filtrarPedidos()">
+            <option value="hoje">Hoje</option>
+            <option value="7dias">Últimos 7 dias</option>
+            <option value="todos">Todos</option>
+          </select>
+          <span id="contadorPedidos" style="font-size:0.82rem;color:#6b7280"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Data / Hora</th>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Itens do Pedido</th>
+                <th>Endereço</th>
+                <th>Pagamento</th>
+                <th>Total</th>
+                <th>Entrega Prevista</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="corpoPedidos">
+              <tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:2.5rem">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- WHATSAPP -->
-    <div class="card">
-      <div class="toolbar" style="margin-bottom:1.2rem">
-        <h2>WhatsApp</h2>
-      </div>
-      <div class="wa-section">
-        <div class="wa-info">
-          <div class="wa-status">
-            <div id="waDot" class="wa-dot dot-initializing"></div>
-            <span id="waStatusText" class="wa-status-text">Verificando...</span>
-          </div>
-          <div id="waNumero" class="wa-numero"></div>
-          <div class="wa-btns">
-            <button id="btnDesconectar" class="btn btn-warning btn-sm hidden" onclick="desconectarWhatsApp()">🔴 Desconectar / Trocar número</button>
-            <button id="btnReconectar" class="btn btn-success btn-sm hidden" onclick="reconectarWhatsApp()">🔄 Reconectar</button>
-          </div>
+    <!-- TAB HORÁRIOS -->
+    <div id="tab-horarios" class="tab-content hidden">
+      <div class="card">
+        <div class="toolbar">
+          <h2>🕐 Horários de Funcionamento</h2>
+          <button class="btn btn-primary" onclick="salvarHorarios()">Salvar Horários</button>
         </div>
-        <div id="waQrArea" class="wa-qr hidden">
-          <canvas id="waQrCanvas"></canvas>
-          <p>Abra o WhatsApp no celular → <br>Dispositivos Conectados → Conectar Dispositivo</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dia</th>
+                <th>Aberto</th>
+                <th>Abertura</th>
+                <th>Fechamento</th>
+              </tr>
+            </thead>
+            <tbody id="corpoHorarios">
+              <tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:2rem">Carregando...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="toolbar">
-        <h2>Cardápio</h2>
-        <button class="btn btn-primary" onclick="abrirModalNovo()">+ Adicionar Produto</button>
+    <!-- TAB WHATSAPP -->
+    <div id="tab-whatsapp" class="tab-content hidden">
+      <div class="card">
+        <div class="toolbar" style="margin-bottom:1.2rem">
+          <h2>📱 WhatsApp</h2>
+        </div>
+        <div class="wa-section">
+          <div class="wa-info">
+            <div class="wa-status">
+              <div id="waDot" class="wa-dot dot-initializing"></div>
+              <span id="waStatusText" class="wa-status-text">Verificando...</span>
+            </div>
+            <div id="waNumero" class="wa-numero"></div>
+            <div class="wa-btns">
+              <button id="btnDesconectar" class="btn btn-warning btn-sm hidden" onclick="desconectarWhatsApp()">🔴 Desconectar / Trocar número</button>
+              <button id="btnReconectar" class="btn btn-success btn-sm hidden" onclick="reconectarWhatsApp()">🔄 Reconectar</button>
+            </div>
+          </div>
+          <div id="waQrArea" class="wa-qr hidden">
+            <canvas id="waQrCanvas"></canvas>
+            <p>Abra o WhatsApp no celular →<br>Dispositivos Conectados → Conectar Dispositivo</p>
+          </div>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nome</th>
-              <th>Tipo</th>
-              <th>Preço</th>
-              <th>Descrição</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="corpoProdutos">
-            <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:2.5rem">Carregando...</td></tr>
-          </tbody>
-        </table>
+    </div>
+
+    <!-- TAB CARDÁPIO -->
+    <div id="tab-cardapio" class="tab-content hidden">
+      <div class="card">
+        <div class="toolbar">
+          <h2>🍕 Cardápio</h2>
+          <button class="btn btn-primary" onclick="abrirModalNovo()">+ Adicionar Produto</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Preço</th>
+                <th>Descrição</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="corpoProdutos">
+              <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:2.5rem">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </main>
 </div>
 
-<!-- MODAL DE PRODUTO -->
+<!-- MODAL PRODUTO -->
 <div id="modalOverlay" class="overlay">
   <div class="modal">
     <h2 id="modalTitulo">Produto</h2>
@@ -244,9 +374,21 @@
   let horariosData = [];
   let waPollingInterval = null;
   let ultimoQr = null;
+  let pedidosData = [];
+  let pedidosFiltrados = [];
+  let pedidosAutoRefreshInterval = null;
 
   if (token) mostrarPainel();
 
+  // ── Tabs ──────────────────────────────────────────────────
+  function mostrarTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    btn.classList.add('active');
+  }
+
+  // ── Auth ──────────────────────────────────────────────────
   async function login() {
     const senha = document.getElementById('senhaInput').value;
     try {
@@ -282,16 +424,181 @@
     document.getElementById('senhaInput').value = '';
     document.getElementById('loginErro').classList.add('hidden');
     pararPollingWhatsApp();
+    clearInterval(pedidosAutoRefreshInterval);
   }
 
   function mostrarPainel() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('painel').classList.remove('hidden');
+    carregarPedidos();
     carregarProdutos();
     carregarHorarios();
     iniciarPollingWhatsApp();
   }
 
+  // ── Pedidos ───────────────────────────────────────────────
+  async function carregarPedidos() {
+    try {
+      const res = await fetch('/admin/api/pedidos', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { sair(); return; }
+      pedidosData = await res.json();
+      atualizarStats();
+      filtrarPedidos();
+    } catch {
+      mostrarAlerta('Erro ao carregar pedidos.', 'error');
+    }
+  }
+
+  function atualizarStats() {
+    const agora = new Date();
+    const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    const pedidosHoje = pedidosData.filter(p => new Date(p.createdAt) >= inicioHoje);
+    const receitaHoje = pedidosHoje
+      .filter(p => p.status !== 'cancelado')
+      .reduce((s, p) => s + Number(p.total), 0);
+    const andamento = pedidosData.filter(p => ['pendente', 'confirmado', 'em_preparo'].includes(p.status)).length;
+
+    document.getElementById('statHoje').textContent = pedidosHoje.length;
+    document.getElementById('statReceitaHoje').textContent = 'R$ ' + receitaHoje.toFixed(2);
+    document.getElementById('statAndamento').textContent = andamento;
+    document.getElementById('statTotal').textContent = pedidosData.length;
+  }
+
+  function filtrarPedidos() {
+    const filtroStatus = document.getElementById('filtroStatus').value;
+    const filtroPeriodo = document.getElementById('filtroPeriodo').value;
+    const agora = new Date();
+    const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    const inicio7dias = new Date(inicioHoje);
+    inicio7dias.setDate(inicio7dias.getDate() - 6);
+
+    pedidosFiltrados = pedidosData.filter(p => {
+      if (filtroStatus && p.status !== filtroStatus) return false;
+      const data = new Date(p.createdAt);
+      if (filtroPeriodo === 'hoje' && data < inicioHoje) return false;
+      if (filtroPeriodo === '7dias' && data < inicio7dias) return false;
+      return true;
+    });
+    document.getElementById('contadorPedidos').textContent = `${pedidosFiltrados.length} pedido(s)`;
+    renderizarPedidos();
+  }
+
+  function formatarTelefone(tel) {
+    const n = (tel || '').replace('@c.us', '').replace(/\D/g, '');
+    if (n.length === 13) return `(${n.slice(2,4)}) ${n.slice(4,5)} ${n.slice(5,9)}-${n.slice(9)}`;
+    if (n.length === 12) return `(${n.slice(2,4)}) ${n.slice(4,8)}-${n.slice(8)}`;
+    return tel || '—';
+  }
+
+  function formatarDataHora(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  const STATUS_OPTS = [
+    ['pendente',   '⏳ Pendente'],
+    ['confirmado', '✅ Confirmado'],
+    ['em_preparo', '👨‍🍳 Em Preparo'],
+    ['enviado',    '🛵 Enviado'],
+    ['entregue',   '📦 Entregue'],
+    ['cancelado',  '❌ Cancelado']
+  ];
+
+  function renderizarPedidos() {
+    const tbody = document.getElementById('corpoPedidos');
+    if (pedidosFiltrados.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:2.5rem">Nenhum pedido encontrado para o filtro selecionado</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pedidosFiltrados.map(p => {
+      const itens = (p.itens || []).map(i => `${i.quantidade}× ${i.produto} — R$ ${(i.quantidade * Number(i.preco)).toFixed(2)}`).join('<br>');
+      const entrega = p.agendado && p.data_agendamento
+        ? '🗓️ ' + formatarDataHora(p.data_agendamento)
+        : '⚡ Imediata (~40 min)';
+      const tel = formatarTelefone(p.cliente?.telefone);
+      const opts = STATUS_OPTS.map(([v, l]) => `<option value="${v}"${p.status === v ? ' selected' : ''}>${l}</option>`).join('');
+      return `
+        <tr>
+          <td><strong>#${p.id}</strong></td>
+          <td style="white-space:nowrap;font-size:0.82rem">${formatarDataHora(p.createdAt)}</td>
+          <td><strong>${escHtml(p.nome_destinatario || '—')}</strong></td>
+          <td style="white-space:nowrap;font-size:0.82rem">${tel}</td>
+          <td class="itens-cell">${itens || '—'}</td>
+          <td class="end-cell">${escHtml(p.endereco || '—')}</td>
+          <td style="white-space:nowrap">${p.forma_pagamento || '—'}</td>
+          <td style="white-space:nowrap"><strong>R$ ${Number(p.total).toFixed(2)}</strong></td>
+          <td style="font-size:0.82rem;white-space:nowrap">${entrega}</td>
+          <td><select class="select-status" onchange="atualizarStatusPedido(${p.id}, this.value)">${opts}</select></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function atualizarStatusPedido(id, status) {
+    try {
+      const res = await fetch(`/admin/api/pedidos/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        const p = pedidosData.find(x => x.id === id);
+        if (p) p.status = status;
+        atualizarStats();
+        mostrarAlerta(`Pedido #${id} atualizado para "${status}".`, 'success');
+      } else {
+        mostrarAlerta('Erro ao atualizar status.', 'error');
+        carregarPedidos();
+      }
+    } catch {
+      mostrarAlerta('Erro ao conectar.', 'error');
+    }
+  }
+
+  function toggleAutoRefresh() {
+    clearInterval(pedidosAutoRefreshInterval);
+    if (document.getElementById('chkAutoRefresh').checked) {
+      pedidosAutoRefreshInterval = setInterval(carregarPedidos, 30000);
+    }
+  }
+
+  function exportarCSV() {
+    if (pedidosFiltrados.length === 0) { mostrarAlerta('Nenhum pedido para exportar.', 'error'); return; }
+    const cab = ['#','Data','Hora','Nome','Telefone','Itens','Endereço','Pagamento','Total','Entrega Prevista','Agendado','Status'];
+    const linhas = pedidosFiltrados.map(p => {
+      const d = new Date(p.createdAt);
+      const itens = (p.itens || []).map(i => `${i.quantidade}x ${i.produto}`).join(' | ');
+      const entrega = p.agendado && p.data_agendamento ? formatarDataHora(p.data_agendamento) : 'Imediata';
+      return [
+        p.id,
+        d.toLocaleDateString('pt-BR'),
+        d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        p.nome_destinatario || '',
+        formatarTelefone(p.cliente?.telefone),
+        itens,
+        (p.endereco || '').replace(/"/g, "'"),
+        p.forma_pagamento || '',
+        Number(p.total).toFixed(2),
+        entrega,
+        p.agendado ? 'Sim' : 'Não',
+        p.status
+      ].map(v => `"${v}"`).join(',');
+    });
+    const csv = '﻿' + [cab.join(','), ...linhas].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Produtos ──────────────────────────────────────────────
   async function carregarProdutos() {
     try {
       const res = await fetch('/admin/api/produtos', { headers: { Authorization: `Bearer ${token}` } });
@@ -316,10 +623,10 @@
     tbody.innerHTML = produtos.map(p => `
       <tr>
         <td><strong>#${p.id}</strong></td>
-        <td><strong>${p.nome}</strong></td>
+        <td><strong>${escHtml(p.nome)}</strong></td>
         <td><span class="badge badge-tipo">${emojiTipo(p.tipo)} ${p.tipo}</span></td>
         <td>R$ ${Number(p.preco).toFixed(2)}</td>
-        <td class="desc-cell" title="${p.descricao || ''}">${p.descricao || '—'}</td>
+        <td class="desc-cell" title="${escHtml(p.descricao || '')}">${escHtml(p.descricao || '—')}</td>
         <td><span class="badge ${p.ativo ? 'badge-ativo' : 'badge-inativo'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></td>
         <td>
           <div class="actions">
@@ -329,8 +636,7 @@
             </button>
           </div>
         </td>
-      </tr>
-    `).join('');
+      </tr>`).join('');
   }
 
   function abrirModalNovo() {
@@ -370,15 +676,9 @@
     const tipo = document.getElementById('fTipo').value;
     const descricao = document.getElementById('fDescricao').value.trim();
     const ativo = document.getElementById('fAtivo').checked;
-
-    if (!nome || isNaN(preco) || preco < 0) {
-      mostrarAlerta('Preencha nome e preço corretamente.', 'error');
-      return;
-    }
-
+    if (!nome || isNaN(preco) || preco < 0) { mostrarAlerta('Preencha nome e preço corretamente.', 'error'); return; }
     const url = editandoId ? `/admin/api/produtos/${editandoId}` : '/admin/api/produtos';
     const method = editandoId ? 'PUT' : 'POST';
-
     try {
       const res = await fetch(url, {
         method,
@@ -393,14 +693,11 @@
         const err = await res.json();
         mostrarAlerta(err.erro || 'Erro ao salvar.', 'error');
       }
-    } catch {
-      mostrarAlerta('Erro ao conectar com o servidor.', 'error');
-    }
+    } catch { mostrarAlerta('Erro ao conectar com o servidor.', 'error'); }
   }
 
   async function toggleAtivo(id, ativoAtual) {
-    const acao = ativoAtual ? 'desativar' : 'ativar';
-    if (!confirm(`Deseja ${acao} este produto?`)) return;
+    if (!confirm(`Deseja ${ativoAtual ? 'desativar' : 'ativar'} este produto?`)) return;
     const p = produtos.find(x => x.id === id);
     try {
       const res = await fetch(`/admin/api/produtos/${id}`, {
@@ -408,21 +705,8 @@
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ nome: p.nome, preco: p.preco, tipo: p.tipo, descricao: p.descricao, ativo: !ativoAtual })
       });
-      if (res.ok) {
-        mostrarAlerta(`Produto ${ativoAtual ? 'desativado' : 'ativado'}!`, 'success');
-        carregarProdutos();
-      }
-    } catch {
-      mostrarAlerta('Erro ao atualizar produto.', 'error');
-    }
-  }
-
-  function mostrarAlerta(msg, tipo) {
-    const el = document.getElementById('alerta');
-    el.textContent = msg;
-    el.className = `alert alert-${tipo}`;
-    el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 3500);
+      if (res.ok) { mostrarAlerta(`Produto ${ativoAtual ? 'desativado' : 'ativado'}!`, 'success'); carregarProdutos(); }
+    } catch { mostrarAlerta('Erro ao atualizar produto.', 'error'); }
   }
 
   document.getElementById('modalOverlay').addEventListener('click', function(e) {
@@ -430,7 +714,6 @@
   });
 
   // ── Horários ──────────────────────────────────────────────
-
   async function carregarHorarios() {
     try {
       const res = await fetch('/admin/api/horarios', { headers: { Authorization: `Bearer ${token}` } });
@@ -453,8 +736,7 @@
         </td>
         <td><input type="time" value="${h.hora_abertura}" data-campo="abertura" data-dia="${h.dia_semana}" style="width:110px" ${!h.aberto ? 'disabled' : ''}></td>
         <td><input type="time" value="${h.hora_fechamento}" data-campo="fechamento" data-dia="${h.dia_semana}" style="width:110px" ${!h.aberto ? 'disabled' : ''}></td>
-      </tr>
-    `).join('');
+      </tr>`).join('');
   }
 
   function toggleDia(dia, aberto) {
@@ -468,108 +750,85 @@
   }
 
   async function salvarHorarios() {
-    // Coletar valores atuais dos inputs
     const horarios = horariosData.map(h => {
       const abertura = document.querySelector(`input[data-campo="abertura"][data-dia="${h.dia_semana}"]`);
       const fechamento = document.querySelector(`input[data-campo="fechamento"][data-dia="${h.dia_semana}"]`);
-      return {
-        dia_semana: h.dia_semana,
-        aberto: h.aberto,
-        hora_abertura: abertura?.value || h.hora_abertura,
-        hora_fechamento: fechamento?.value || h.hora_fechamento
-      };
+      return { dia_semana: h.dia_semana, aberto: h.aberto, hora_abertura: abertura?.value || h.hora_abertura, hora_fechamento: fechamento?.value || h.hora_fechamento };
     });
-
     try {
       const res = await fetch('/admin/api/horarios', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ horarios })
       });
-      if (res.ok) {
-        mostrarAlerta('Horários salvos com sucesso!', 'success');
-        carregarHorarios();
-      } else {
-        mostrarAlerta('Erro ao salvar horários.', 'error');
-      }
+      if (res.ok) { mostrarAlerta('Horários salvos com sucesso!', 'success'); carregarHorarios(); }
+      else mostrarAlerta('Erro ao salvar horários.', 'error');
     } catch { mostrarAlerta('Erro ao conectar com o servidor.', 'error'); }
   }
 
   // ── WhatsApp ──────────────────────────────────────────────
-
   function iniciarPollingWhatsApp() {
     verificarStatusWhatsApp();
     waPollingInterval = setInterval(verificarStatusWhatsApp, 3000);
   }
 
-  function pararPollingWhatsApp() {
-    clearInterval(waPollingInterval);
-  }
+  function pararPollingWhatsApp() { clearInterval(waPollingInterval); }
 
   async function verificarStatusWhatsApp() {
     try {
       const res = await fetch('/admin/api/whatsapp/status', { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
-      const data = await res.json();
-      atualizarUIWhatsApp(data);
-    } catch { /* servidor pode estar iniciando */ }
+      atualizarUIWhatsApp(await res.json());
+    } catch {}
   }
 
   function atualizarUIWhatsApp(data) {
-    const dot = document.getElementById('waDot');
-    const texto = document.getElementById('waStatusText');
-    const numero = document.getElementById('waNumero');
-    const qrArea = document.getElementById('waQrArea');
-    const btnDesc = document.getElementById('btnDesconectar');
-    const btnRec = document.getElementById('btnReconectar');
-
     const labels = {
-      connected: ['dot-connected', '🟢 Conectado'],
-      waiting_qr: ['dot-waiting', '⏳ Aguardando leitura do QR Code'],
-      authenticated: ['dot-waiting', '🔐 Autenticando...'],
+      connected:    ['dot-connected',    '🟢 Conectado'],
+      waiting_qr:   ['dot-waiting',      '⏳ Aguardando leitura do QR Code'],
+      authenticated:['dot-waiting',      '🔐 Autenticando...'],
       initializing: ['dot-initializing', '⚙️ Inicializando...'],
       disconnected: ['dot-disconnected', '🔴 Desconectado'],
       auth_failure: ['dot-disconnected', '❌ Falha na autenticação']
     };
-
-    dot.className = 'wa-dot ' + (labels[data.status]?.[0] || 'dot-disconnected');
-    texto.textContent = labels[data.status]?.[1] || data.status;
-    numero.textContent = data.numero ? `Número: +${data.numero}` : '';
-
+    document.getElementById('waDot').className = 'wa-dot ' + (labels[data.status]?.[0] || 'dot-disconnected');
+    document.getElementById('waStatusText').textContent = labels[data.status]?.[1] || data.status;
+    document.getElementById('waNumero').textContent = data.numero ? `Número: +${data.numero}` : '';
     const conectado = data.status === 'connected';
     const desconectado = ['disconnected', 'auth_failure'].includes(data.status);
-
-    btnDesc.classList.toggle('hidden', !conectado);
-    btnRec.classList.toggle('hidden', !desconectado);
-
+    document.getElementById('btnDesconectar').classList.toggle('hidden', !conectado);
+    document.getElementById('btnReconectar').classList.toggle('hidden', !desconectado);
     if (data.qrCode && data.qrCode !== ultimoQr) {
       ultimoQr = data.qrCode;
-      qrArea.classList.remove('hidden');
+      document.getElementById('waQrArea').classList.remove('hidden');
       QRCode.toCanvas(document.getElementById('waQrCanvas'), data.qrCode, { width: 220, margin: 1 });
     } else if (!data.qrCode) {
-      qrArea.classList.add('hidden');
+      document.getElementById('waQrArea').classList.add('hidden');
       ultimoQr = null;
     }
   }
 
   async function desconectarWhatsApp() {
     if (!confirm('Desconectar o WhatsApp? O chatbot ficará offline até reconectar.')) return;
-    const res = await fetch('/admin/api/whatsapp/disconnect', {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await fetch('/admin/api/whatsapp/disconnect', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) mostrarAlerta('WhatsApp desconectado. Clique em Reconectar para gerar novo QR.', 'success');
     else mostrarAlerta('Erro ao desconectar.', 'error');
   }
 
   async function reconectarWhatsApp() {
     mostrarAlerta('Iniciando reconexão, aguarde...', 'success');
-    const res = await fetch('/admin/api/whatsapp/reconnect', {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await fetch('/admin/api/whatsapp/reconnect', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) mostrarAlerta('Erro ao reconectar.', 'error');
   }
 
-
+  // ── Alerta global ─────────────────────────────────────────
+  function mostrarAlerta(msg, tipo) {
+    const el = document.getElementById('alerta');
+    el.textContent = msg;
+    el.className = `alert alert-${tipo}`;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3500);
+  }
 </script>
 </body>
 </html>

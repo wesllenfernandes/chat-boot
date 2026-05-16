@@ -116,4 +116,36 @@ router.post('/api/whatsapp/reconnect', autenticar, async (req, res) => {
   }
 });
 
+router.get('/api/pedidos', autenticar, async (req, res) => {
+  try {
+    const { Cliente, Pedido, ItemPedido } = require('../models');
+    const pedidos = await Pedido.findAll({
+      include: [
+        { model: Cliente, as: 'cliente', attributes: ['telefone'] },
+        { model: ItemPedido, as: 'itens' }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 500
+    });
+    res.json(pedidos);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.put('/api/pedidos/:id/status', autenticar, async (req, res) => {
+  try {
+    const { Pedido } = require('../models');
+    const { status } = req.body;
+    const validos = ['pendente', 'confirmado', 'em_preparo', 'enviado', 'entregue', 'cancelado'];
+    if (!validos.includes(status)) return res.status(400).json({ erro: 'Status inválido' });
+    const pedido = await Pedido.findByPk(req.params.id);
+    if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+    await pedido.update({ status });
+    res.json({ sucesso: true });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
 module.exports = router;
