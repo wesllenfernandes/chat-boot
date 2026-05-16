@@ -86,8 +86,8 @@ class ChatbotService {
       return await this.finalizarPedido(telefone);
     }
 
-    // Verificar horário de funcionamento na primeira intenção de pedido (carrinho vazio)
-    if (itens.length === 0 && !cliente.agendando) {
+    // Verificar horário de funcionamento sempre que o carrinho estiver vazio
+    if (itens.length === 0) {
       const ehPergunta = mensagem.includes('?');
       const temIntencaoPedido = !ehPergunta && (
         this.obterProdutoPorNumero(msg) !== null ||
@@ -106,10 +106,16 @@ class ChatbotService {
           if (proxima) {
             const abertura = HorarioService.formatarDataHora(proxima.data);
             const entrega = HorarioService.formatarDataHora(proxima.previsaoEntrega);
-            resposta += `Nossa próxima abertura é *${abertura}*.\n\n`;
-            resposta += `Mas você pode *agendar seu pedido agora* 😊\n`;
-            resposta += `Assim que abrirmos, seu pedido será preparado e a entrega prevista é para *${entrega}*.\n\n`;
-            resposta += `Continue escolhendo os itens normalmente!\n\n`;
+            if (cliente.agendando) {
+              // usuário já foi avisado antes — mensagem mais curta
+              resposta += `Ainda não abrimos. Seu pedido será agendado para entrega em *${entrega}*.\n\n`;
+              resposta += `Escolha os itens abaixo:\n\n`;
+            } else {
+              resposta += `Nossa próxima abertura é *${abertura}*.\n\n`;
+              resposta += `Mas você pode *agendar seu pedido agora* 😊\n`;
+              resposta += `Assim que abrirmos, seu pedido será preparado e a entrega prevista é para *${entrega}*.\n\n`;
+              resposta += `Continue escolhendo os itens normalmente!\n\n`;
+            }
           } else {
             resposta += `Não temos horário de reabertura disponível no momento. Tente mais tarde.\n\n`;
           }
