@@ -109,6 +109,7 @@ async function startServer() {
     // Inicializar WhatsApp
     console.log('📱 Inicializando WhatsApp Web...');
     whatsappController = new WhatsAppController();
+    app.locals.whatsappController = whatsappController;
     
     await whatsappController.initialize();
     

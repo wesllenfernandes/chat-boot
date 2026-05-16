@@ -81,7 +81,25 @@
 
     /* ACTIONS */
     .actions { display: flex; gap: 0.4rem; }
+
+    /* WHATSAPP */
+    .wa-section { display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap; }
+    .wa-info { flex: 1; min-width: 200px; }
+    .wa-status { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+    .wa-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .dot-connected { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .dot-waiting { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; animation: pulse 1.2s infinite; }
+    .dot-disconnected { background: #ef4444; }
+    .dot-initializing { background: #6b7280; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .wa-status-text { font-weight: 600; font-size: 0.95rem; }
+    .wa-numero { color: #6b7280; font-size: 0.85rem; margin-bottom: 1.2rem; }
+    .wa-qr { text-align: center; }
+    .wa-qr canvas { border: 6px solid white; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
+    .wa-qr p { color: #6b7280; font-size: 0.82rem; margin-top: 0.6rem; }
+    .wa-btns { display: flex; gap: 0.6rem; flex-wrap: wrap; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -106,6 +124,31 @@
   </header>
   <main>
     <div id="alerta" class="alert hidden"></div>
+
+    <!-- WHATSAPP -->
+    <div class="card">
+      <div class="toolbar" style="margin-bottom:1.2rem">
+        <h2>WhatsApp</h2>
+      </div>
+      <div class="wa-section">
+        <div class="wa-info">
+          <div class="wa-status">
+            <div id="waDot" class="wa-dot dot-initializing"></div>
+            <span id="waStatusText" class="wa-status-text">Verificando...</span>
+          </div>
+          <div id="waNumero" class="wa-numero"></div>
+          <div class="wa-btns">
+            <button id="btnDesconectar" class="btn btn-warning btn-sm hidden" onclick="desconectarWhatsApp()">🔴 Desconectar / Trocar número</button>
+            <button id="btnReconectar" class="btn btn-success btn-sm hidden" onclick="reconectarWhatsApp()">🔄 Reconectar</button>
+          </div>
+        </div>
+        <div id="waQrArea" class="wa-qr hidden">
+          <canvas id="waQrCanvas"></canvas>
+          <p>Abra o WhatsApp no celular → <br>Dispositivos Conectados → Conectar Dispositivo</p>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="toolbar">
         <h2>Cardápio</h2>
@@ -212,12 +255,14 @@
     document.getElementById('painel').classList.add('hidden');
     document.getElementById('senhaInput').value = '';
     document.getElementById('loginErro').classList.add('hidden');
+    pararPollingWhatsApp();
   }
 
   function mostrarPainel() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('painel').classList.remove('hidden');
     carregarProdutos();
+    iniciarPollingWhatsApp();
   }
 
   async function carregarProdutos() {
@@ -356,6 +401,84 @@
   document.getElementById('modalOverlay').addEventListener('click', function(e) {
     if (e.target === this) fecharModal();
   });
+
+  // ── WhatsApp ──────────────────────────────────────────────
+  let waPollingInterval = null;
+  let ultimoQr = null;
+
+  function iniciarPollingWhatsApp() {
+    verificarStatusWhatsApp();
+    waPollingInterval = setInterval(verificarStatusWhatsApp, 3000);
+  }
+
+  function pararPollingWhatsApp() {
+    clearInterval(waPollingInterval);
+  }
+
+  async function verificarStatusWhatsApp() {
+    try {
+      const res = await fetch('/admin/api/whatsapp/status', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      atualizarUIWhatsApp(data);
+    } catch { /* servidor pode estar iniciando */ }
+  }
+
+  function atualizarUIWhatsApp(data) {
+    const dot = document.getElementById('waDot');
+    const texto = document.getElementById('waStatusText');
+    const numero = document.getElementById('waNumero');
+    const qrArea = document.getElementById('waQrArea');
+    const btnDesc = document.getElementById('btnDesconectar');
+    const btnRec = document.getElementById('btnReconectar');
+
+    const labels = {
+      connected: ['dot-connected', '🟢 Conectado'],
+      waiting_qr: ['dot-waiting', '⏳ Aguardando leitura do QR Code'],
+      authenticated: ['dot-waiting', '🔐 Autenticando...'],
+      initializing: ['dot-initializing', '⚙️ Inicializando...'],
+      disconnected: ['dot-disconnected', '🔴 Desconectado'],
+      auth_failure: ['dot-disconnected', '❌ Falha na autenticação']
+    };
+
+    dot.className = 'wa-dot ' + (labels[data.status]?.[0] || 'dot-disconnected');
+    texto.textContent = labels[data.status]?.[1] || data.status;
+    numero.textContent = data.numero ? `Número: +${data.numero}` : '';
+
+    const conectado = data.status === 'connected';
+    const desconectado = ['disconnected', 'auth_failure'].includes(data.status);
+
+    btnDesc.classList.toggle('hidden', !conectado);
+    btnRec.classList.toggle('hidden', !desconectado);
+
+    if (data.qrCode && data.qrCode !== ultimoQr) {
+      ultimoQr = data.qrCode;
+      qrArea.classList.remove('hidden');
+      QRCode.toCanvas(document.getElementById('waQrCanvas'), data.qrCode, { width: 220, margin: 1 });
+    } else if (!data.qrCode) {
+      qrArea.classList.add('hidden');
+      ultimoQr = null;
+    }
+  }
+
+  async function desconectarWhatsApp() {
+    if (!confirm('Desconectar o WhatsApp? O chatbot ficará offline até reconectar.')) return;
+    const res = await fetch('/admin/api/whatsapp/disconnect', {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) mostrarAlerta('WhatsApp desconectado. Clique em Reconectar para gerar novo QR.', 'success');
+    else mostrarAlerta('Erro ao desconectar.', 'error');
+  }
+
+  async function reconectarWhatsApp() {
+    mostrarAlerta('Iniciando reconexão, aguarde...', 'success');
+    const res = await fetch('/admin/api/whatsapp/reconnect', {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) mostrarAlerta('Erro ao reconectar.', 'error');
+  }
+
+
 </script>
 </body>
 </html>

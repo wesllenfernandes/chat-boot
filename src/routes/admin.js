@@ -63,4 +63,32 @@ router.put('/api/produtos/:id', autenticar, async (req, res) => {
   }
 });
 
+router.get('/api/whatsapp/status', autenticar, (req, res) => {
+  const ctrl = req.app.locals.whatsappController;
+  if (!ctrl) return res.json({ status: 'initializing', qrCode: null, numero: null });
+  res.json(ctrl.getWhatsAppStatus());
+});
+
+router.post('/api/whatsapp/disconnect', autenticar, async (req, res) => {
+  const ctrl = req.app.locals.whatsappController;
+  if (!ctrl) return res.status(503).json({ erro: 'Controller não disponível' });
+  try {
+    await ctrl.desconectar();
+    res.json({ sucesso: true });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.post('/api/whatsapp/reconnect', autenticar, async (req, res) => {
+  const ctrl = req.app.locals.whatsappController;
+  if (!ctrl) return res.status(503).json({ erro: 'Controller não disponível' });
+  try {
+    await ctrl.reconectar();
+    res.json({ sucesso: true });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
 module.exports = router;

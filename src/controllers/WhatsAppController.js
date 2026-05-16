@@ -2,63 +2,74 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const ChatbotService = require('../services/ChatbotService');
 
+const PUPPETEER_OPTS = {
+  headless: 'new',
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--no-first-run',
+    '--no-zygote',
+    '--disable-gpu',
+    '--disable-web-security',
+    '--disable-features=IsolateOrigins,site-per-process',
+    '--window-size=1366,768'
+  ],
+  defaultViewport: { width: 1366, height: 768 }
+};
+
 class WhatsAppController {
   constructor() {
+    this.connectionStatus = 'initializing';
+    this.qrCode = null;
+    this.processedMessages = new Map();
+    this._criarCliente();
+    this.setupEventListeners();
+  }
+  
+  _criarCliente() {
     this.client = new Client({
       authStrategy: new LocalAuth({
         dataPath: process.env.WHATSAPP_SESSION_PATH || './sessions'
       }),
-      puppeteer: {
-        headless: 'new',
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=IsolateOrigins,site-per-process',
-          '--window-size=1366,768'
-        ],
-        defaultViewport: {
-          width: 1366,
-          height: 768
-        }
-      }
+      puppeteer: PUPPETEER_OPTS
     });
-    
-    // Cache para evitar processamento de mensagens duplicadas
-    this.processedMessages = new Map();
-    
-    this.setupEventListeners();
   }
-  
+
   setupEventListeners() {
-    // QR Code
     this.client.on('qr', (qr) => {
       console.log('\n╔════════════════════════════════════════╗');
       console.log('║  QR CODE GERADO - ESCANEIE COM WHATSAPP ║');
       console.log('╚════════════════════════════════════════╝\n');
       qrcode.generate(qr, { small: true });
       console.log('\nAguardando leitura do QR Code...\n');
+      this.qrCode = qr;
+      this.connectionStatus = 'waiting_qr';
     });
-    
-    // Pronto
+
     this.client.on('ready', () => {
       console.log('\n✅ Cliente WhatsApp conectado com sucesso!');
       console.log('🤖 Chatbot da Pizzaria está online!\n');
+      this.connectionStatus = 'connected';
+      this.qrCode = null;
     });
-    
-    // Autenticação
+
     this.client.on('authenticated', () => {
       console.log('✅ Autenticado com sucesso!');
+      this.connectionStatus = 'authenticated';
     });
-    
-    // Falha na autenticação
+
     this.client.on('auth_failure', (msg) => {
       console.error('❌ Falha na autenticação:', msg);
+      this.connectionStatus = 'auth_failure';
+      this.qrCode = null;
+    });
+
+    this.client.on('disconnected', (reason) => {
+      console.log('⚠️  WhatsApp desconectado:', reason);
+      this.connectionStatus = 'disconnected';
+      this.qrCode = null;
     });
     
     // Mensagem recebida
@@ -207,6 +218,30 @@ class WhatsAppController {
 
   getStatus() {
     return this.client.info;
+  }
+
+  getWhatsAppStatus() {
+    return {
+      status: this.connectionStatus,
+      qrCode: this.connectionStatus === 'waiting_qr' ? this.qrCode : null,
+      numero: this.client?.info?.wid?.user || null
+    };
+  }
+
+  async desconectar() {
+    this.connectionStatus = 'disconnected';
+    this.qrCode = null;
+    try { await this.client.logout(); } catch (e) { /* sessão pode já estar inválida */ }
+    try { await this.client.destroy(); } catch (e) {}
+  }
+
+  async reconectar() {
+    this.connectionStatus = 'initializing';
+    this.qrCode = null;
+    try { await this.client.destroy(); } catch (e) {}
+    this._criarCliente();
+    this.setupEventListeners();
+    await this.client.initialize();
   }
 }
 
