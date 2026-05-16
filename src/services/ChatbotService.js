@@ -89,6 +89,10 @@ class ChatbotService {
       return await this.adicionarProdutosAoPedido(telefone, produtosDetectados);
     }
 
+    if (this.isPedidoGenerico(mensagem)) {
+      return this.responderPedidoGenerico();
+    }
+
     // Se há itens no carrinho, verificar se o cliente quer adicionar mais ou finalizar
     if (itens.length > 0) {
       // Verificar se o cliente quer finalizar em linguagem natural
@@ -203,6 +207,17 @@ Quantas unidades você gostaria de levar?`,
     if (indicadoresPedido.some(indicador => msg.includes(indicador))) {
       try {
         const interpretacao = await AIService.interpretarPedido(mensagem);
+
+        if (interpretacao.produtos && interpretacao.produtos.length > 0) {
+          const produtosConfiaveis = this.filtrarProdutosExplicitamenteMencionados(mensagem, interpretacao.produtos);
+
+          if (produtosConfiaveis.length > 0) {
+            return await this.adicionarProdutosAoPedido(telefone, produtosConfiaveis);
+          }
+
+          console.log('IA sugeriu produto sem mencao explicita; pedindo escolha ao cliente');
+          return this.responderPedidoGenerico();
+        }
 
         if (interpretacao.ePedido && interpretacao.produtos.length > 0) {
           let primeiroItem = true;
@@ -428,6 +443,36 @@ Quantas unidades você gostaria de levar?`,
     }
   }
   
+  static isPedidoGenerico(mensagem) {
+    const texto = this.normalizarTexto(mensagem);
+    const verbosPedido = ['quero', 'gostaria', 'queria', 'preciso', 'vou levar', 'me da', 'me de', 'pedir'];
+    const tiposGenericos = ['pizza', 'pizzas', 'bebida', 'bebidas', 'refeicao', 'lanche'];
+
+    return verbosPedido.some(verbo => texto.includes(verbo)) &&
+      tiposGenericos.some(tipo => this.contemTermo(texto, tipo));
+  }
+
+  static responderPedidoGenerico() {
+    return {
+      resposta: 'Claro! Qual item vocÃª gostaria?\n\n' + formatarCardapio(),
+      proximaEtapa: 'MENU'
+    };
+  }
+
+  static filtrarProdutosExplicitamenteMencionados(mensagem, produtos) {
+    const texto = this.normalizarTexto(mensagem);
+
+    return produtos.filter(produto => {
+      const produtoDoCardapio = this.resolverProdutoDoCardapio(produto);
+      if (!produtoDoCardapio) {
+        return false;
+      }
+
+      return this.obterAliasesProduto(produtoDoCardapio)
+        .some(alias => this.contemTermo(texto, alias));
+    });
+  }
+
   static obterProdutoPorNumero(msg) {
     if (!/^\d+$/.test(msg)) {
       return null;
