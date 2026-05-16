@@ -21,7 +21,8 @@ class ChatbotService {
     // Cancelamento em qualquer etapa
     if (this.isCancelamento(msg)) {
       const emFluxoPedido = etapa !== 'MENU'
-        || (cliente.itens_pedido && cliente.itens_pedido.length > 0);
+        || (cliente.itens_pedido && cliente.itens_pedido.length > 0)
+        || cliente.agendando;
       await ClienteService.limparPedido(telefone);
       return {
         resposta: emFluxoPedido
