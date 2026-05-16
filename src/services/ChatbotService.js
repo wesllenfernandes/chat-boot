@@ -90,9 +90,12 @@ class ChatbotService {
       return await this.selecionarProduto(telefone, produtoSelecionadoPorNumero);
     }
 
-    const produtosDetectados = this.extrairProdutosDaMensagem(mensagem);
-    if (produtosDetectados.length > 0) {
-      return await this.adicionarProdutosAoPedido(telefone, produtosDetectados);
+    const ehPergunta = mensagem.includes('?');
+    if (!ehPergunta) {
+      const produtosDetectados = this.extrairProdutosDaMensagem(mensagem);
+      if (produtosDetectados.length > 0) {
+        return await this.adicionarProdutosAoPedido(telefone, produtosDetectados);
+      }
     }
 
     if (this.isPedidoGenerico(mensagem)) {
@@ -708,11 +711,20 @@ Quantas unidades vocÃª gostaria de levar?`,
   static extrairProdutosDaMensagem(mensagem) {
     const texto = this.normalizarTexto(mensagem);
     const produtos = [];
+    const negativos = ['nao quero', 'nao gostaria', 'nao queria', 'sem', 'nunca', 'nem', 'nao'];
 
     for (const item of cardapio) {
       const aliases = this.obterAliasesProduto(item);
 
       if (aliases.some(alias => this.contemTermo(texto, alias))) {
+        const temContextoNegativo = negativos.some(neg =>
+          aliases.some(alias =>
+            new RegExp(`${this.escaparRegex(neg)}\\s+\\w*\\s*${this.escaparRegex(alias)}`).test(texto)
+          )
+        );
+
+        if (temContextoNegativo) continue;
+
         produtos.push({
           id: item.id,
           nome: item.nome,

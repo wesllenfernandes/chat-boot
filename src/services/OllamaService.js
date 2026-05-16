@@ -231,7 +231,9 @@ Retorne APENAS o JSON, sem formatação markdown.`;
     let texto = 'CARDÁPIO DISPONÍVEL:\n';
     cardapio.forEach(item => {
       const emoji = item.tipo === 'pizza' ? '🍕' : item.tipo === 'bebida' ? '🥤' : '🍟';
-      texto += `${item.id} - ${emoji} ${item.nome} - R$ ${item.preco.toFixed(2)}\n`;
+      texto += `${item.id} - ${emoji} ${item.nome} - R$ ${item.preco.toFixed(2)}`;
+      if (item.descricao) texto += ` (${item.descricao})`;
+      texto += '\n';
     });
     return texto;
   }

@@ -1,10 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { sequelize, testConnection } = require('./src/config/database');
 const { Cliente, Pedido, ItemPedido } = require('./src/models');
 const WhatsAppController = require('./src/controllers/WhatsAppController');
 const TimeoutService = require('./src/services/TimeoutService');
+const adminRoutes = require('./src/routes/admin');
+const { inicializar: inicializarCardapio } = require('./src/config/cardapio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,8 +16,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'src/public')));
 
 // Rotas
+app.use('/admin', adminRoutes);
+
 app.get('/', (req, res) => {
   res.json({
     mensagem: 'Chatbot da Pizzaria - API Online',
@@ -94,6 +100,10 @@ async function startServer() {
     await sequelize.sync({ alter: true });
     await sequelize.query('PRAGMA foreign_keys = ON;');
     console.log('✅ Models sincronizados com sucesso!');
+
+    // Inicializar cardápio (seed + carregar do banco)
+    await inicializarCardapio();
+    console.log('🍕 Cardápio carregado do banco de dados!');
     console.log('💾 O banco de dados será criado automaticamente em: database.sqlite');
     
     // Inicializar WhatsApp

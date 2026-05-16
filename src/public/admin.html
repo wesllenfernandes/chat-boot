@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Pizzaria Otaliva</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+    .hidden { display: none !important; }
+
+    /* LOGIN */
+    .login-wrap { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .login-card { background: white; padding: 2.5rem; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); width: 340px; text-align: center; }
+    .login-card h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .login-card p { color: #6b7280; font-size: 0.9rem; margin-bottom: 1.8rem; }
+
+    /* INPUTS */
+    input[type=text], input[type=number], input[type=password], select, textarea {
+      width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #d1d5db; border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #e8490f; }
+    textarea { resize: vertical; }
+
+    /* BUTTONS */
+    .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #e8490f; color: white; }
+    .btn-secondary { background: #6b7280; color: white; }
+    .btn-success { background: #16a34a; color: white; }
+    .btn-warning { background: #d97706; color: white; }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+    .btn-full { width: 100%; }
+
+    /* HEADER */
+    header { background: #e8490f; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    header h1 { font-size: 1.2rem; }
+
+    /* MAIN */
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+
+    /* CARD */
+    .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 1.5rem; }
+
+    /* TOOLBAR */
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .toolbar h2 { font-size: 1.1rem; }
+
+    /* TABLE */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    th { background: #f9fafb; padding: 0.7rem 1rem; text-align: left; font-size: 0.8rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 0.85rem 1rem; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .desc-cell { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6b7280; font-size: 0.82rem; }
+
+    /* BADGES */
+    .badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .badge-ativo { background: #dcfce7; color: #15803d; }
+    .badge-inativo { background: #fee2e2; color: #b91c1c; }
+    .badge-tipo { background: #f3f4f6; color: #374151; }
+
+    /* MODAL */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; justify-content: center; align-items: center; }
+    .overlay.open { display: flex; }
+    .modal { background: white; border-radius: 14px; padding: 2rem; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+    .modal h2 { margin-bottom: 1.5rem; font-size: 1.2rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.83rem; font-weight: 600; color: #4b5563; margin-bottom: 0.35rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .modal-footer { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid #f3f4f6; }
+    .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; }
+    .checkbox-label input { width: auto; }
+
+    /* ALERT */
+    .alert { padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; }
+    .alert-success { background: #dcfce7; color: #15803d; }
+    .alert-error { background: #fee2e2; color: #b91c1c; }
+
+    /* ACTIONS */
+    .actions { display: flex; gap: 0.4rem; }
+  </style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <h1>🍕 Admin Pizzaria</h1>
+    <p>Painel de gerenciamento do cardápio</p>
+    <div id="loginErro" class="alert alert-error hidden"></div>
+    <div class="form-group">
+      <input type="password" id="senhaInput" placeholder="Senha de acesso" onkeypress="if(event.key==='Enter')login()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="login()">Entrar</button>
+  </div>
+</div>
+
+<!-- PAINEL PRINCIPAL -->
+<div id="painel" class="hidden">
+  <header>
+    <h1>🍕 Admin — Pizzaria Otaliva</h1>
+    <button class="btn btn-secondary btn-sm" onclick="sair()">Sair</button>
+  </header>
+  <main>
+    <div id="alerta" class="alert hidden"></div>
+    <div class="card">
+      <div class="toolbar">
+        <h2>Cardápio</h2>
+        <button class="btn btn-primary" onclick="abrirModalNovo()">+ Adicionar Produto</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>Tipo</th>
+              <th>Preço</th>
+              <th>Descrição</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpoProdutos">
+            <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:2.5rem">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL DE PRODUTO -->
+<div id="modalOverlay" class="overlay">
+  <div class="modal">
+    <h2 id="modalTitulo">Produto</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" id="fNome" placeholder="Ex: Pizza Calabresa">
+      </div>
+      <div class="form-group">
+        <label>Tipo *</label>
+        <select id="fTipo">
+          <option value="pizza">🍕 Pizza</option>
+          <option value="bebida">🥤 Bebida</option>
+          <option value="acompanhamento">🍟 Acompanhamento</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Preço (R$) *</label>
+      <input type="number" id="fPreco" step="0.01" min="0" placeholder="0.00">
+    </div>
+    <div class="form-group">
+      <label>Descrição</label>
+      <textarea id="fDescricao" rows="3" placeholder="Ex: Pizza grande (8 fatias) — ingredientes..."></textarea>
+    </div>
+    <div id="fAtivoGroup" class="form-group hidden">
+      <label class="checkbox-label">
+        <input type="checkbox" id="fAtivo"> Produto ativo (visível no cardápio e para a IA)
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarProduto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let token = sessionStorage.getItem('adminToken');
+  let produtos = [];
+  let editandoId = null;
+
+  if (token) mostrarPainel();
+
+  async function login() {
+    const senha = document.getElementById('senhaInput').value;
+    try {
+      const res = await fetch('/admin/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senha })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        token = data.token;
+        sessionStorage.setItem('adminToken', token);
+        mostrarPainel();
+      } else {
+        mostrarErroLogin(data.erro || 'Senha incorreta');
+      }
+    } catch {
+      mostrarErroLogin('Erro ao conectar com o servidor');
+    }
+  }
+
+  function mostrarErroLogin(msg) {
+    const el = document.getElementById('loginErro');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  function sair() {
+    token = null;
+    sessionStorage.removeItem('adminToken');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('painel').classList.add('hidden');
+    document.getElementById('senhaInput').value = '';
+    document.getElementById('loginErro').classList.add('hidden');
+  }
+
+  function mostrarPainel() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('painel').classList.remove('hidden');
+    carregarProdutos();
+  }
+
+  async function carregarProdutos() {
+    try {
+      const res = await fetch('/admin/api/produtos', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { sair(); return; }
+      produtos = await res.json();
+      renderizarProdutos();
+    } catch {
+      mostrarAlerta('Erro ao carregar produtos.', 'error');
+    }
+  }
+
+  function emojiTipo(tipo) {
+    return tipo === 'pizza' ? '🍕' : tipo === 'bebida' ? '🥤' : '🍟';
+  }
+
+  function renderizarProdutos() {
+    const tbody = document.getElementById('corpoProdutos');
+    if (produtos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:2.5rem">Nenhum produto cadastrado</td></tr>';
+      return;
+    }
+    tbody.innerHTML = produtos.map(p => `
+      <tr>
+        <td><strong>#${p.id}</strong></td>
+        <td><strong>${p.nome}</strong></td>
+        <td><span class="badge badge-tipo">${emojiTipo(p.tipo)} ${p.tipo}</span></td>
+        <td>R$ ${Number(p.preco).toFixed(2)}</td>
+        <td class="desc-cell" title="${p.descricao || ''}">${p.descricao || '—'}</td>
+        <td><span class="badge ${p.ativo ? 'badge-ativo' : 'badge-inativo'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="abrirModalEditar(${p.id})">✏️ Editar</button>
+            <button class="btn ${p.ativo ? 'btn-warning' : 'btn-success'} btn-sm" onclick="toggleAtivo(${p.id}, ${p.ativo})">
+              ${p.ativo ? '🚫 Desativar' : '✅ Ativar'}
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function abrirModalNovo() {
+    editandoId = null;
+    document.getElementById('modalTitulo').textContent = '➕ Novo Produto';
+    document.getElementById('fNome').value = '';
+    document.getElementById('fPreco').value = '';
+    document.getElementById('fTipo').value = 'pizza';
+    document.getElementById('fDescricao').value = '';
+    document.getElementById('fAtivo').checked = true;
+    document.getElementById('fAtivoGroup').classList.add('hidden');
+    document.getElementById('modalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('fNome').focus(), 100);
+  }
+
+  function abrirModalEditar(id) {
+    const p = produtos.find(x => x.id === id);
+    if (!p) return;
+    editandoId = id;
+    document.getElementById('modalTitulo').textContent = '✏️ Editar Produto';
+    document.getElementById('fNome').value = p.nome;
+    document.getElementById('fPreco').value = p.preco;
+    document.getElementById('fTipo').value = p.tipo;
+    document.getElementById('fDescricao').value = p.descricao || '';
+    document.getElementById('fAtivo').checked = !!p.ativo;
+    document.getElementById('fAtivoGroup').classList.remove('hidden');
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function fecharModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  async function salvarProduto() {
+    const nome = document.getElementById('fNome').value.trim();
+    const preco = parseFloat(document.getElementById('fPreco').value);
+    const tipo = document.getElementById('fTipo').value;
+    const descricao = document.getElementById('fDescricao').value.trim();
+    const ativo = document.getElementById('fAtivo').checked;
+
+    if (!nome || isNaN(preco) || preco < 0) {
+      mostrarAlerta('Preencha nome e preço corretamente.', 'error');
+      return;
+    }
+
+    const url = editandoId ? `/admin/api/produtos/${editandoId}` : '/admin/api/produtos';
+    const method = editandoId ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nome, preco, tipo, descricao, ativo })
+      });
+      if (res.ok) {
+        fecharModal();
+        mostrarAlerta(editandoId ? 'Produto atualizado!' : 'Produto adicionado!', 'success');
+        carregarProdutos();
+      } else {
+        const err = await res.json();
+        mostrarAlerta(err.erro || 'Erro ao salvar.', 'error');
+      }
+    } catch {
+      mostrarAlerta('Erro ao conectar com o servidor.', 'error');
+    }
+  }
+
+  async function toggleAtivo(id, ativoAtual) {
+    const acao = ativoAtual ? 'desativar' : 'ativar';
+    if (!confirm(`Deseja ${acao} este produto?`)) return;
+    const p = produtos.find(x => x.id === id);
+    try {
+      const res = await fetch(`/admin/api/produtos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nome: p.nome, preco: p.preco, tipo: p.tipo, descricao: p.descricao, ativo: !ativoAtual })
+      });
+      if (res.ok) {
+        mostrarAlerta(`Produto ${ativoAtual ? 'desativado' : 'ativado'}!`, 'success');
+        carregarProdutos();
+      }
+    } catch {
+      mostrarAlerta('Erro ao atualizar produto.', 'error');
+    }
+  }
+
+  function mostrarAlerta(msg, tipo) {
+    const el = document.getElementById('alerta');
+    el.textContent = msg;
+    el.className = `alert alert-${tipo}`;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3500);
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
+  });
+</script>
+</body>
+</html>
