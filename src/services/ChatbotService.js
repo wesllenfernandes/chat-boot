@@ -3,6 +3,8 @@ const ClienteService = require('./ClienteService');
 const PedidoService = require('./PedidoService');
 const AIService = require('./AIService');
 
+const RODAPE_CANCELAR = '\n\n_Digite *cancelar* a qualquer momento para cancelar o pedido._';
+
 class ChatbotService {
   static async processarMensagem(telefone, mensagem) {
     // Atualizar última interação
@@ -344,14 +346,14 @@ Quantas unidades você gostaria de levar?`,
       resposta += '\n';
     }
 
-    resposta += 'Gostaria de adicionar mais itens ou deseja finalizar o pedido?';
+    resposta += 'Gostaria de adicionar mais itens ou deseja finalizar o pedido?' + RODAPE_CANCELAR;
 
     return {
       resposta: resposta,
       proximaEtapa: 'MENU'
     };
   }
-  
+
   static async processarPagamento(telefone, msg, cliente, mensagem) {
     const formaPagamento = this.resolverFormaPagamento(msg);
 
@@ -366,7 +368,7 @@ Quantas unidades você gostaria de levar?`,
     await ClienteService.atualizarEtapa(telefone, 'ENDERECO');
 
     return {
-      resposta: `✅ ${formaPagamento}! Perfeito.\n\nAgora, por favor, digite seu endereço completo para entrega:`,
+      resposta: `✅ ${formaPagamento}! Perfeito.\n\nAgora, por favor, digite seu endereço completo para entrega:` + RODAPE_CANCELAR,
       proximaEtapa: 'ENDERECO'
     };
 
@@ -632,9 +634,7 @@ Quantas unidades você gostaria de levar?`,
     await ClienteService.atualizarEtapa(telefone, 'QUANTIDADE');
 
     return {
-      resposta: `Perfeito! 🍕 Você escolheu: *${produto.nome}* por R$ ${produto.preco.toFixed(2)}
-
-Quantas unidades você gostaria de levar?`,
+      resposta: `Perfeito! 🍕 Você escolheu: *${produto.nome}* por R$ ${produto.preco.toFixed(2)}\n\nQuantas unidades você gostaria de levar?` + RODAPE_CANCELAR,
       proximaEtapa: 'QUANTIDADE'
     };
 
@@ -686,7 +686,7 @@ Quantas unidades vocÃª gostaria de levar?`,
     itens.forEach(item => {
       respostaLimpa += `${item.quantidade}x ${item.produto}\n`;
     });
-    respostaLimpa += '\nGostaria de adicionar mais itens ao pedido ou deseja finalizar?';
+    respostaLimpa += '\nGostaria de adicionar mais itens ao pedido ou deseja finalizar?' + RODAPE_CANCELAR;
 
     return {
       resposta: respostaLimpa,
@@ -850,7 +850,7 @@ Quantas unidades vocÃª gostaria de levar?`,
     resposta += '1 - Dinheiro\n';
     resposta += '2 - Pix\n';
     resposta += '3 - Cartão\n\n';
-    resposta += 'Digite apenas o número da opção:';
+    resposta += 'Digite apenas o número da opção:' + RODAPE_CANCELAR;
 
     return {
       resposta: resposta,
