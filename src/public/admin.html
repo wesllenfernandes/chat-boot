@@ -365,6 +365,16 @@
               <button id="btnReconectar" class="btn btn-success btn-sm hidden" onclick="reconectarWhatsApp()">🔄 Reconectar</button>
             </div>
           </div>
+          <div class="card" style="margin-top:16px">
+            <div class="toolbar" style="align-items:center;gap:12px">
+              <div>
+                <strong>🧠 Cache de Respostas IA</strong>
+                <span id="cacheStats" style="margin-left:8px;color:#888;font-size:13px"></span>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="limparCacheIA()">🗑️ Limpar Cache</button>
+            </div>
+            <p style="margin:8px 0 0;color:#666;font-size:13px">O cache guarda respostas geradas pelo Ollama para reutilização. Limpe se o chatbot estiver respondendo algo errado sobre produtos.</p>
+          </div>
           <div id="waQrArea" class="wa-qr hidden">
             <canvas id="waQrCanvas"></canvas>
             <p>Abra o WhatsApp no celular →<br>Dispositivos Conectados → Conectar Dispositivo</p>
@@ -536,6 +546,7 @@
     carregarHorarios();
     carregarEmpresa();
     carregarCidades();
+    carregarCacheStats();
     iniciarPollingWhatsApp();
   }
 
@@ -929,6 +940,27 @@
     mostrarAlerta('Iniciando reconexão, aguarde...', 'success');
     const res = await fetch('/admin/api/whatsapp/reconnect', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) mostrarAlerta('Erro ao reconectar.', 'error');
+  }
+
+  async function carregarCacheStats() {
+    try {
+      const res = await fetch('/admin/api/cache/stats', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const stats = await res.json();
+      const el = document.getElementById('cacheStats');
+      if (el) el.textContent = `${stats.entradas_no_banco ?? 0} entradas · ${stats.total_hits ?? 0} hits`;
+    } catch {}
+  }
+
+  async function limparCacheIA() {
+    if (!confirm('Limpar todo o cache de respostas IA? O chatbot ficará um pouco mais lento até o cache ser reconstruído.')) return;
+    const res = await fetch('/admin/api/cache', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      mostrarAlerta('Cache limpo com sucesso!', 'success');
+      carregarCacheStats();
+    } else {
+      mostrarAlerta('Erro ao limpar cache.', 'error');
+    }
   }
 
   // ── Empresa ───────────────────────────────────────────────

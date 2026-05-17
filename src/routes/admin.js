@@ -116,6 +116,26 @@ router.post('/api/whatsapp/reconnect', autenticar, async (req, res) => {
   }
 });
 
+// ── Cache IA ─────────────────────────────────────────────
+router.get('/api/cache/stats', autenticar, async (req, res) => {
+  try {
+    const cache = require('../services/CacheService');
+    res.json(await cache.estatisticas());
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
+router.delete('/api/cache', autenticar, async (req, res) => {
+  try {
+    const cache = require('../services/CacheService');
+    await cache.limparTudo();
+    res.json({ sucesso: true });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
+
 // ── Empresa ───────────────────────────────────────────────
 router.get('/api/empresa', autenticar, async (req, res) => {
   try {
