@@ -77,7 +77,9 @@ class WhatsAppController {
       try {
         await this.handleMessage(message);
       } catch (error) {
-        console.error('Erro ao processar mensagem:', error);
+        console.error('Erro ao processar mensagem:', error.message);
+        console.error('Stack:', error.stack);
+        console.error('Telefone:', message.from, '| Body:', message.body, '| Type:', message.type);
         message.reply('❌ Ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.');
       }
     });
@@ -151,9 +153,15 @@ class WhatsAppController {
       }
     }
     
+    // Ignorar mensagens sem texto (stickers, reações, enquetes, etc.)
+    if (!texto || !texto.trim()) {
+      console.log(`⏭️  Mensagem sem corpo de texto de ${telefone}, ignorando...`);
+      return;
+    }
+
     // Log da mensagem recebida
     console.log(`\n📩 Mensagem recebida de ${telefone}: ${texto}`);
-    
+
     // Processar mensagem
     const resultado = await ChatbotService.processarMensagem(telefone, texto);
     

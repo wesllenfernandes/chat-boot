@@ -406,6 +406,15 @@ Quantas unidades você gostaria de levar?`,
     }
 
     const produto = cliente.produto_selecionado;
+
+    if (!produto || !produto.nome) {
+      await ClienteService.resetarEtapa(telefone);
+      return {
+        resposta: 'Ops! Perdi o produto selecionado. Escolha novamente:\n\n' + formatarCardapio(),
+        proximaEtapa: 'MENU'
+      };
+    }
+
     const item = {
       produto: produto.nome,
       quantidade: quantidade,
