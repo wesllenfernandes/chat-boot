@@ -868,7 +868,7 @@ Quantas unidades vocÃª gostaria de levar?`,
         produtos.push({
           id: item.id,
           nome: item.nome,
-          quantidade: this.extrairQuantidade(texto, aliases)
+          quantidade: this.extrairQuantidadePorAliases(texto, aliases)
         });
       }
     }
@@ -916,7 +916,7 @@ Quantas unidades vocÃª gostaria de levar?`,
     return new RegExp(`(^|\\s)${this.escaparRegex(termo)}(\\s|$)`).test(texto);
   }
 
-  static extrairQuantidade(texto, aliases) {
+  static extrairQuantidadePorAliases(texto, aliases) {
     for (const alias of aliases) {
       const aliasRegex = this.escaparRegex(alias);
       const antesDoProduto = texto.match(new RegExp(`(?:^|\\s)(\\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\\s+${aliasRegex}(?:\\s|$)`));
