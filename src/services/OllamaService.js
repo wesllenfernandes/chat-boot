@@ -9,6 +9,7 @@ class OllamaService {
   async gerarResposta(mensagem, contexto = {}) {
     try {
       const cardapio = this.formatarCardapioParaPrompt();
+      const entrega = await this.formatarEntregaParaPrompt();
 
       const systemPrompt = `Você é um atendente de balcão da Pizzaria Otaliva 🍕.
 
@@ -20,11 +21,18 @@ INFORMAÇÕES DA PIZZARIA:
 
 ${cardapio}
 
+${entrega}
+
 ⚠️ REGRA ABSOLUTA — PRODUTOS:
 Você NÃO PODE mencionar, sugerir ou inventar produtos que NÃO estejam listados no CARDÁPIO DISPONÍVEL acima.
-Se o cliente perguntar sobre qualquer produto que não está no cardápio (ex: sobremesa, hambúrguer, açaí, pastel, etc.), responda:
-  "Infelizmente não trabalhamos com [produto]. Nosso cardápio conta com [mencione brevemente as categorias reais: pizzas, bebidas e acompanhamentos]. Posso te ajudar a escolher algo? 😊"
+Se o cliente perguntar sobre qualquer produto que não está no cardápio (ex: sobremesa, hambúrguer, açaí, etc.), responda:
+  "Infelizmente não trabalhamos com [produto]. Nosso cardápio conta com pizzas, bebidas e acompanhamentos. Posso te ajudar a escolher algo? 😊"
 NUNCA invente preços, produtos ou opções que não existam no cardápio.
+
+⚠️ REGRA ABSOLUTA — ENTREGA:
+Responda perguntas sobre entrega SOMENTE com base nas CIDADES DE ENTREGA listadas acima.
+Se o cliente perguntar se entregamos em uma cidade que NÃO está na lista, responda claramente que não entregamos naquela cidade e informe as cidades disponíveis.
+NUNCA diga que não fazemos entrega se a lista de cidades existir — fazemos entrega, mas apenas nas cidades listadas.
 
 COMPORTAMENTO:
 - Seja cordial, profissional e amigável
@@ -230,6 +238,37 @@ Retorne APENAS o JSON, sem formatação markdown.`;
       texto += '\n';
     });
     return texto;
+  }
+
+  async formatarEntregaParaPrompt() {
+    try {
+      const Empresa = require('../models/Empresa');
+      const CidadeEntrega = require('../models/CidadeEntrega');
+      const empresa = await Empresa.findOne();
+      const cidades = await CidadeEntrega.findAll({ where: { ativa: true } });
+
+      const linhas = [];
+
+      if (empresa && empresa.cidade && empresa.cidade.trim()) {
+        const taxa = Number(empresa.taxa_entrega_sede || 0);
+        const taxaStr = taxa > 0 ? ` (taxa: R$ ${taxa.toFixed(2)})` : ' (entrega gratuita)';
+        linhas.push(`- ${empresa.cidade} — cidade sede${taxaStr}`);
+      }
+
+      cidades.forEach(c => {
+        const taxa = Number(c.taxa_entrega || 0);
+        const taxaStr = taxa > 0 ? ` (taxa: R$ ${taxa.toFixed(2)})` : ' (entrega gratuita)';
+        linhas.push(`- ${c.cidade}${taxaStr}`);
+      });
+
+      if (linhas.length === 0) {
+        return 'ENTREGA: Realizamos entregas. Consulte-nos sobre sua cidade.';
+      }
+
+      return `CIDADES DE ENTREGA (SOMENTE estas cidades):\n${linhas.join('\n')}`;
+    } catch {
+      return '';
+    }
   }
 
   makeRequest(endpoint, data, method = 'POST') {
