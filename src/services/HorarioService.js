@@ -21,12 +21,39 @@ class HorarioService {
     return h * 60 + m;
   }
 
+  static _cruzaMeiaNoite(horario) {
+    return this._minutosHoje(horario.hora_fechamento) <= this._minutosHoje(horario.hora_abertura);
+  }
+
   static async isAberto() {
     const agora = new Date();
-    const horario = await HorarioFuncionamento.findOne({ where: { dia_semana: agora.getDay() } });
-    if (!horario || !horario.aberto) return false;
+    const horarios = await HorarioFuncionamento.findAll();
+    const diaHoje = agora.getDay();
+    const diaOntem = (diaHoje + 6) % 7;
     const atual = agora.getHours() * 60 + agora.getMinutes();
-    return atual >= this._minutosHoje(horario.hora_abertura) && atual < this._minutosHoje(horario.hora_fechamento);
+
+    // Verificar horário do dia atual
+    const hoje = horarios.find(h => h.dia_semana === diaHoje);
+    if (hoje && hoje.aberto) {
+      const abertura = this._minutosHoje(hoje.hora_abertura);
+      const fechamento = this._minutosHoje(hoje.hora_fechamento);
+      if (fechamento > abertura) {
+        // Horário normal (ex: 18:00 – 23:00)
+        if (atual >= abertura && atual < fechamento) return true;
+      } else {
+        // Horário que cruza meia-noite (ex: 18:00 – 04:00)
+        if (atual >= abertura) return true;
+      }
+    }
+
+    // Verificar se o horário de ontem cruzava meia-noite e ainda está vigente agora
+    const ontem = horarios.find(h => h.dia_semana === diaOntem);
+    if (ontem && ontem.aberto && this._cruzaMeiaNoite(ontem)) {
+      const fechamentoOntem = this._minutosHoje(ontem.hora_fechamento);
+      if (atual < fechamentoOntem) return true;
+    }
+
+    return false;
   }
 
   static async proximaAbertura() {
@@ -44,8 +71,11 @@ class HorarioService {
       const abertura = new Date(data);
       abertura.setHours(hAb, mAb, 0, 0);
 
-      if (abertura <= agora) continue; // já passou hoje
+      if (abertura <= agora) continue; // abertura já passou
 
+      // Se for horário que cruza meia-noite e agora ainda está dentro da janela
+      // (isAberto retorna true nesse caso, então proximaAbertura não deveria ser chamada)
+      // mas por segurança, só retorna se de fato ainda não estiver aberto
       const previsaoEntrega = new Date(abertura.getTime() + 50 * 60 * 1000);
       return { data: abertura, previsaoEntrega };
     }
