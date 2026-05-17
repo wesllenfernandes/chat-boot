@@ -72,7 +72,9 @@ class ChatbotService {
     // Palavras que indicam pedidos em linguagem natural
     const indicadoresPedido = [
       'quero', 'gostaria', 'queria', 'preciso', 'vou levar',
-      'me dê', 'me da', 'traga', 'quero pedir', 'gostaria de pedir'
+      'me dê', 'me da', 'traga', 'quero pedir', 'gostaria de pedir',
+      'vou querer', 'vou pedir', 'pode mandar', 'me manda', 'me passa',
+      'quero sim', 'sim quero', 'pode ser', 'bora', 'vamos'
     ];
 
     // Palavras que indicam intenção de finalizar
@@ -337,6 +339,8 @@ Quantas unidades você gostaria de levar?`,
       } catch (error) {
         console.error('Erro ao interpretar pedido:', error);
       }
+      // Indicador de pedido detectado mas nenhum produto identificado — mostra cardápio
+      return this.responderPedidoGenerico();
     }
 
     // Para todas as outras mensagens (saudações, perguntas, etc.), usar IA como atendente principal
@@ -365,12 +369,38 @@ Quantas unidades você gostaria de levar?`,
     return await this.processarMenu(telefone, msg, cliente, mensagem);
   }
   
+  static extrairQuantidade(msg) {
+    // Tenta número direto primeiro
+    const direto = parseInt(msg);
+    if (!isNaN(direto)) return direto;
+
+    const extenso = {
+      'zero': 0, 'um': 1, 'uma': 1, 'dois': 2, 'duas': 2,
+      'tres': 3, 'três': 3, 'quatro': 4, 'cinco': 5,
+      'seis': 6, 'meia duzia': 6, 'meia dúzia': 6,
+      'sete': 7, 'oito': 8, 'nove': 9, 'dez': 10,
+      'onze': 11, 'doze': 12, 'uma duzia': 12, 'uma dúzia': 12
+    };
+
+    const texto = msg.trim().toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    // Testa frases compostas primeiro (ex: "meia duzia"), depois palavras simples
+    const chaves = Object.keys(extenso).sort((a, b) => b.length - a.length);
+    for (const chave of chaves) {
+      const chaveNorm = chave.normalize('NFD').replace(/[̀-ͯ]/g, '');
+      if (texto.includes(chaveNorm)) return extenso[chave];
+    }
+
+    return NaN;
+  }
+
   static async processarQuantidade(telefone, msg, cliente, mensagem) {
-    const quantidade = parseInt(msg);
+    const quantidade = this.extrairQuantidade(msg);
 
     if (isNaN(quantidade) || quantidade < 1) {
       return {
-        resposta: 'Por favor, digite uma quantidade válida (número maior que 0). 😊',
+        resposta: 'Por favor, digite uma quantidade válida (número maior que 0). 😊\nEx: *1*, *2*, *três*...',
         proximaEtapa: 'QUANTIDADE'
       };
     }
@@ -708,11 +738,6 @@ Quantas unidades você gostaria de levar?`,
   static responderPedidoGenerico() {
     return {
       resposta: 'Claro! Qual item você gostaria?\n\n' + formatarCardapio(),
-      proximaEtapa: 'MENU'
-    };
-
-    return {
-      resposta: 'Claro! Qual item vocÃª gostaria?\n\n' + formatarCardapio(),
       proximaEtapa: 'MENU'
     };
   }
